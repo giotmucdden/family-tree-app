@@ -1,0 +1,19 @@
+{
+  "name": "family-tree-app",
+  "version": "1.0.0",
+  "description": "Interactive GUI Family Tree with React, Node.js, MongoDB, and Facebook OAuth",
+  "scripts": {
+    "server": "cd server && node index.js",
+    "server:dev": "cd server && npx nodemon index.js",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run server:dev\" \"npm run client\"",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm install && npm run build",
+    "start": "cd server && node index.js",
+    "seed": "cd server && node seed.js",
+    "render-build": "cd server && npm install && cd ../client && npm install && npm run build"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

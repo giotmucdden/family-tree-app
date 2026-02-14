@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: family-tree-app
+    runtime: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false # Set manually in Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        sync: false # Set to your Render URL, e.g. https://family-tree-app.onrender.com
