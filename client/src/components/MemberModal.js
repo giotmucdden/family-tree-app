@@ -65,7 +65,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
   function handleSubmit(e) {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim()) {
-      alert('First name and last name are required');
+      alert('Họ và tên là bắt buộc');
       return;
     }
     const data = { ...form };
@@ -104,25 +104,25 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
-              <label>First Name *</label>
+              <label>Tên *</label>
               <input
                 type="text"
                 name="firstName"
                 value={form.firstName}
                 onChange={handleChange}
-                placeholder="First name"
+                placeholder="Tên"
                 required
                 autoFocus
               />
             </div>
             <div className="form-group">
-              <label>Last Name *</label>
+              <label>Họ *</label>
               <input
                 type="text"
                 name="lastName"
                 value={form.lastName}
                 onChange={handleChange}
-                placeholder="Last name"
+                placeholder="Họ"
                 required
               />
             </div>
@@ -130,11 +130,11 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Gender</label>
+              <label>Giới tính</label>
               <select name="gender" value={form.gender} onChange={handleChange}>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
               </select>
             </div>
             <div className="form-group">
@@ -145,14 +145,14 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
                   checked={form.isLiving}
                   onChange={handleChange}
                 />
-                &nbsp;Living
+                &nbsp;Còn sống
               </label>
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label>Birth Date</label>
+              <label>Ngày sinh</label>
               <input
                 type="date"
                 name="birthDate"
@@ -161,7 +161,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
               />
             </div>
             <div className="form-group">
-              <label>Death Date</label>
+              <label>Ngày mất</label>
               <input
                 type="date"
                 name="deathDate"
@@ -174,38 +174,38 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Birth Place</label>
+              <label>Nơi sinh</label>
               <input
                 type="text"
                 name="birthPlace"
                 value={form.birthPlace}
                 onChange={handleChange}
-                placeholder="City, Country"
+                placeholder="Thành phố, Quốc gia"
               />
             </div>
             <div className="form-group">
-              <label>Occupation</label>
+              <label>Nghề nghiệp</label>
               <input
                 type="text"
                 name="occupation"
                 value={form.occupation}
                 onChange={handleChange}
-                placeholder="Occupation"
+                placeholder="Nghề nghiệp"
               />
             </div>
           </div>
 
-          <div className="form-section-label">Relationships</div>
+          <div className="form-section-label">Quan hệ gia đình</div>
 
           <div className="form-row">
             <div className="form-group">
-              <label>👨 Father</label>
+              <label>👨 Cha</label>
               <select
                 name="fatherId"
                 value={form.fatherId}
                 onChange={handleChange}
               >
-                <option value="">-- None --</option>
+                <option value="">-- Không có --</option>
                 {males.map((m) => (
                   <option key={m._id} value={m._id}>
                     {m.firstName} {m.lastName}
@@ -214,13 +214,13 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
               </select>
             </div>
             <div className="form-group">
-              <label>👩 Mother</label>
+              <label>👩 Mẹ</label>
               <select
                 name="motherId"
                 value={form.motherId}
                 onChange={handleChange}
               >
-                <option value="">-- None --</option>
+                <option value="">-- Không có --</option>
                 {females.map((m) => (
                   <option key={m._id} value={m._id}>
                     {m.firstName} {m.lastName}
@@ -231,34 +231,34 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
           </div>
 
           <div className="form-section-label">
-            Spouses
+            Vợ/Chồng
             <button
               type="button"
               className="btn btn-outline btn-sm"
               style={{ marginLeft: 12, fontSize: 11, padding: '2px 10px' }}
               onClick={addSpouseRow}
             >
-              + Add Spouse
+              + Thêm Vợ/Chồng
             </button>
           </div>
 
           {spouses.length === 0 && (
             <p style={{ fontSize: 13, color: '#999', marginBottom: 12 }}>
-              No spouses added. Click "+ Add Spouse" above to add one.
+              Chưa có vợ/chồng. Nhấn "+ Thêm Vợ/Chồng" ở trên để thêm.
             </p>
           )}
 
           {spouses.map((sp, idx) => (
             <div className="form-row spouse-row" key={idx}>
               <div className="form-group">
-                <label>❤️ Spouse {idx + 1}</label>
+                <label>❤️ Vợ/Chồng {idx + 1}</label>
                 <select
                   value={sp.memberId}
                   onChange={(e) =>
                     handleSpouseChange(idx, 'memberId', e.target.value)
                   }
                 >
-                  <option value="">-- Select --</option>
+                  <option value="">-- Chọn --</option>
                   {potentialSpouses
                     .filter(
                       (m) =>
@@ -279,21 +279,21 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
                 </select>
               </div>
               <div className="form-group" style={{ position: 'relative' }}>
-                <label>Status</label>
+                <label>Tình trạng</label>
                 <select
                   value={sp.status}
                   onChange={(e) =>
                     handleSpouseChange(idx, 'status', e.target.value)
                   }
                 >
-                  <option value="married">💚 Married</option>
-                  <option value="divorced">⚡ Divorced</option>
-                  <option value="widowed">🕊️ Widowed</option>
+                  <option value="married">💚 Kết hôn</option>
+                  <option value="divorced">⚡ Ly hôn</option>
+                  <option value="widowed">🕊️ Góa</option>
                 </select>
                 <button
                   type="button"
                   className="spouse-remove-btn"
-                  title="Remove spouse"
+                  title="Xóa vợ/chồng"
                   onClick={() => removeSpouseRow(idx)}
                 >
                   ✕
@@ -314,34 +314,34 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
               />
             </div>
             <div className="form-group">
-              <label>Phone</label>
+              <label>Điện thoại</label>
               <input
                 type="tel"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                placeholder="+1 234 567 8900"
+                placeholder="+84 123 456 789"
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label>Bio</label>
+            <label>Tiểu sử</label>
             <textarea
               name="bio"
               value={form.bio}
               onChange={handleChange}
-              placeholder="A short biography..."
+              placeholder="Tiểu sử ngắn..."
               rows={3}
             />
           </div>
 
           <div className="modal-actions">
             <button type="button" className="btn btn-outline" onClick={onClose}>
-              Cancel
+              Hủy
             </button>
             <button type="submit" className="btn btn-primary">
-              {initialData ? 'Save Changes' : 'Add Member'}
+              {initialData ? 'Lưu Thay Đổi' : 'Thêm Thành Viên'}
             </button>
           </div>
         </form>

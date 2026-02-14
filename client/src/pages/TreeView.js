@@ -25,7 +25,7 @@ function TreeView() {
       const data = await getTree(treeId);
       setTree(data);
     } catch (err) {
-      console.error('Failed to load tree:', err);
+      console.error('Không thể tải cây:', err);
       navigate('/');
     } finally {
       setLoading(false);
@@ -47,9 +47,7 @@ function TreeView() {
         if (parent) {
           if (parent.gender === 'male') {
             payload.fatherId = parent._id;
-            // Find mother from the parent's spouses array
             if (parent.spouses && parent.spouses.length > 0) {
-              // Prefer current married spouse, otherwise first spouse
               const marriedSpouse = parent.spouses.find(
                 (sp) => sp.status === 'married'
               );
@@ -84,7 +82,7 @@ function TreeView() {
       setShowAddModal(false);
       setAddParentInfo(null);
     } catch (err) {
-      alert('Failed to add member: ' + err.message);
+      alert('Thêm thành viên thất bại: ' + err.message);
     }
   }
 
@@ -95,18 +93,18 @@ function TreeView() {
       setEditingMember(null);
       setSelectedMember(null);
     } catch (err) {
-      alert('Failed to update member: ' + err.message);
+      alert('Cập nhật thất bại: ' + err.message);
     }
   }
 
   async function handleDeleteMember(memberId) {
-    if (!window.confirm('Remove this family member?')) return;
+    if (!window.confirm('Xóa thành viên này?')) return;
     try {
       await deleteMember(treeId, memberId);
       await loadTree();
       setSelectedMember(null);
     } catch (err) {
-      alert('Failed to delete member: ' + err.message);
+      alert('Xóa thất bại: ' + err.message);
     }
   }
 
@@ -116,12 +114,12 @@ function TreeView() {
   }
 
   async function handleCreateBranch(rootMemberId) {
-    if (!window.confirm('Create a new family tree from this member and all descendants?')) return;
+    if (!window.confirm('Tạo cây gia phả mới từ thành viên này và tất cả con cháu?')) return;
     try {
       await createBranchTree(treeId, rootMemberId);
       navigate('/');
     } catch (err) {
-      alert('Failed to create branch tree: ' + err.message);
+      alert('Tạo nhánh thất bại: ' + err.message);
     }
   }
 
@@ -129,7 +127,7 @@ function TreeView() {
     try {
       await exportMembersExcel(treeId);
     } catch (err) {
-      alert('Failed to export: ' + err.message);
+      alert('Xuất file thất bại: ' + err.message);
     }
   }
 
@@ -162,19 +160,19 @@ function TreeView() {
     <div className="tree-view">
       <div className="tree-toolbar">
         <button className="btn btn-outline" onClick={() => navigate('/')}>
-          ← Back to Dashboard
+          ← Quay Lại
         </button>
         <h2>{tree?.name}</h2>
         <div className="toolbar-actions">
           <button className="btn btn-outline btn-export" onClick={handleExport}>
-            📥 Export Excel
+            📥 Xuất Excel
           </button>
           <button
             className="btn btn-outline btn-import"
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
           >
-            {importing ? '⏳ Importing...' : '📤 Import Excel'}
+            {importing ? '⏳ Đang nhập...' : '📤 Nhập Excel'}
           </button>
           <input
             ref={fileInputRef}
@@ -190,7 +188,7 @@ function TreeView() {
               setShowAddModal(true);
             }}
           >
-            + Add Member
+            + Thêm Thành Viên
           </button>
         </div>
       </div>
@@ -230,7 +228,7 @@ function TreeView() {
 
       {showAddModal && (
         <MemberModal
-          title={addParentInfo ? 'Add Child' : 'Add Family Member'}
+          title={addParentInfo ? 'Thêm Con' : 'Thêm Thành Viên'}
           members={tree?.members || []}
           onSubmit={handleAddMember}
           onClose={() => {
@@ -242,7 +240,7 @@ function TreeView() {
 
       {editingMember && (
         <MemberModal
-          title="Edit Member"
+          title="Chỉnh Sửa Thành Viên"
           initialData={editingMember}
           members={tree?.members || []}
           onSubmit={handleUpdateMember}
@@ -254,7 +252,7 @@ function TreeView() {
         <div className="import-overlay">
           <div className="import-progress">
             <div className="spinner" />
-            <p>Importing members... This may take a moment for large files.</p>
+            <p>Đang nhập dữ liệu... Có thể mất một lúc với file lớn.</p>
           </div>
         </div>
       )}
@@ -264,19 +262,19 @@ function TreeView() {
           <div className="import-result" onClick={(e) => e.stopPropagation()}>
             {importResult.error ? (
               <>
-                <h3>❌ Import Failed</h3>
+                <h3>❌ Nhập Thất Bại</h3>
                 <p className="import-error">{importResult.error}</p>
               </>
             ) : (
               <>
-                <h3>✅ Import Complete</h3>
+                <h3>✅ Nhập Hoàn Tất</h3>
                 <div className="import-stats">
-                  <span className="stat-created">🆕 {importResult.created} created</span>
-                  <span className="stat-updated">✏️ {importResult.updated} updated</span>
+                  <span className="stat-created">🆕 {importResult.created} đã tạo</span>
+                  <span className="stat-updated">✏️ {importResult.updated} đã cập nhật</span>
                 </div>
                 {importResult.errors?.length > 0 && (
                   <div className="import-warnings">
-                    <h4>⚠️ {importResult.errors.length} issue(s):</h4>
+                    <h4>⚠️ {importResult.errors.length} vấn đề:</h4>
                     <ul>
                       {importResult.errors.map((err, i) => (
                         <li key={i}>{err}</li>
@@ -286,7 +284,7 @@ function TreeView() {
                 )}
               </>
             )}
-            <button className="btn btn-primary" onClick={() => setImportResult(null)}>Close</button>
+            <button className="btn btn-primary" onClick={() => setImportResult(null)}>Đóng</button>
           </div>
         </div>
       )}

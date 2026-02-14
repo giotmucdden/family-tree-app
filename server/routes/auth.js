@@ -1,26 +1,6 @@
 const express = require('express');
-const passport = require('passport');
 const User = require('../models/User');
 const router = express.Router();
-
-// @route  GET /api/auth/facebook
-// @desc   Auth with Facebook
-router.get(
-  '/facebook',
-  passport.authenticate('facebook', { scope: ['email'] })
-);
-
-// @route  GET /api/auth/facebook/callback
-// @desc   Facebook auth callback
-router.get(
-  '/facebook/callback',
-  passport.authenticate('facebook', {
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=auth_failed`,
-  }),
-  (req, res) => {
-    res.redirect(process.env.CLIENT_URL || 'http://localhost:3000');
-  }
-);
 
 // @route  GET /api/auth/current-user
 // @desc   Get the current logged-in user
@@ -46,27 +26,27 @@ router.get('/current-user', (req, res) => {
 router.get('/logout', (req, res) => {
   req.logout((err) => {
     if (err) {
-      return res.status(500).json({ error: 'Logout failed' });
+      return res.status(500).json({ error: 'Đăng xuất thất bại' });
     }
     req.session.destroy();
-    res.json({ message: 'Logged out successfully' });
+    res.json({ message: 'Đã đăng xuất thành công' });
   });
 });
 
 // @route  POST /api/auth/demo
-// @desc   Log in as the demo user (no Facebook required)
+// @desc   Log in as the demo user
 router.post('/demo', async (req, res) => {
   try {
     const demoUser = await User.findOne({ facebookId: 'demo_user_001' });
     if (!demoUser) {
       return res.status(404).json({
         error:
-          'Demo data not found. Run "node seed.js" in the server directory first.',
+          'Không tìm thấy dữ liệu demo. Hãy chạy "node seed.js" trong thư mục server trước.',
       });
     }
     req.login(demoUser, (err) => {
       if (err) {
-        return res.status(500).json({ error: 'Demo login failed' });
+        return res.status(500).json({ error: 'Đăng nhập demo thất bại' });
       }
       res.json({
         user: {

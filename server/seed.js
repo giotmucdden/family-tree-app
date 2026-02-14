@@ -1,5 +1,8 @@
 /**
- * Seed script: 5-generation Nguyen family tree demo
+ * Seed script: 5-generation Nguyen family tree demo (EXPANDED)
+ *
+ * James & Mary have 10 children (Robert, Susan + 8 new).
+ * Each of the 8 new children has up to 4 generations of descendants.
  *
  * Showcases relationship scenarios:
  *   💚 Living married parents   – most members
@@ -47,7 +50,7 @@ async function seed() {
   const tree = await FamilyTree.create({
     name: 'The Nguyen Family',
     description:
-      'Five generations with married, divorced-remarried, and widowed-remarried scenarios.',
+      'Large family tree with 10 children, divorced-remarried, widowed-remarried, and 120+ members across 5+ generations.',
     owner: demoUser._id,
   });
 
@@ -98,12 +101,36 @@ async function seed() {
   linkSpouses(james, mary, 'married');
 
   // ═══════════════════════════════════════════════════════════
-  //  GEN 2 — Great-Grandparents
-  //  Robert (deceased) & Elizabeth (widowed) → Elizabeth REMARRIED George
-  //  Susan & Richard (DIVORCED) → Susan REMARRIED Frank, Richard REMARRIED Linda
+  //  GEN 2 — 10 Children of James & Mary
+  //  (Robert & Susan are original; 8 new siblings added)
   // ═══════════════════════════════════════════════════════════
 
-  // ---- Robert & Elizabeth  (Robert deceased → widowed) ----
+  // ---- 1. Thomas (eldest) ----
+  const thomas = await make({
+    firstName: 'Thomas',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1943-05-22'),
+    isLiving: true,
+    birthPlace: 'Saigon, Vietnam',
+    occupation: 'Retired Army Colonel',
+    bio: 'Eldest son. Served in the military for 30 years before retiring.',
+  });
+  linkChild(james, mary, thomas);
+
+  const margaret = await make({
+    firstName: 'Margaret',
+    lastName: "O'Brien",
+    gender: 'female',
+    birthDate: new Date('1945-03-18'),
+    isLiving: true,
+    birthPlace: 'Boston, MA',
+    occupation: 'Retired Librarian',
+    bio: "Met Thomas at a USO event. Married in 1965.",
+  });
+  linkSpouses(thomas, margaret, 'married');
+
+  // ---- 2. Robert (existing — deceased, widowed Elizabeth) ----
   const robert = await make({
     firstName: 'Robert',
     lastName: 'Nguyen',
@@ -129,7 +156,6 @@ async function seed() {
   });
   linkSpouses(robert, elizabeth, 'widowed');
 
-  // ---- Elizabeth REMARRIES George (widowed→remarried scenario) ----
   const george = await make({
     firstName: 'George',
     lastName: 'Martinez',
@@ -142,7 +168,32 @@ async function seed() {
   });
   linkSpouses(elizabeth, george, 'married');
 
-  // ---- Susan & Richard  (DIVORCED) ----
+  // ---- 3. Catherine ----
+  const catherine = await make({
+    firstName: 'Catherine',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1947-08-14'),
+    isLiving: true,
+    birthPlace: 'Saigon, Vietnam',
+    occupation: 'Retired Pharmacist',
+    bio: 'Ran the first Vietnamese-owned pharmacy in San Jose.',
+  });
+  linkChild(james, mary, catherine);
+
+  const henry = await make({
+    firstName: 'Henry',
+    lastName: 'Lam',
+    gender: 'male',
+    birthDate: new Date('1945-11-30'),
+    isLiving: true,
+    birthPlace: 'Hong Kong',
+    occupation: 'Retired Civil Engineer',
+    bio: 'Built bridges across California. Married Catherine in 1968.',
+  });
+  linkSpouses(catherine, henry, 'married');
+
+  // ---- 4. Susan (existing — divorced Richard, remarried Frank) ----
   const susan = await make({
     firstName: 'Susan',
     lastName: 'Nguyen',
@@ -167,7 +218,6 @@ async function seed() {
   });
   linkSpouses(susan, richard, 'divorced');
 
-  // ---- Susan REMARRIES Frank (divorced→remarried) ----
   const frank = await make({
     firstName: 'Frank',
     lastName: 'Hoang',
@@ -180,7 +230,6 @@ async function seed() {
   });
   linkSpouses(susan, frank, 'married');
 
-  // ---- Richard REMARRIES Linda (divorced→remarried) ----
   const linda = await make({
     firstName: 'Linda',
     lastName: 'Vo',
@@ -193,20 +242,162 @@ async function seed() {
   });
   linkSpouses(richard, linda, 'married');
 
+  // ---- 5. Joseph ----
+  const joseph = await make({
+    firstName: 'Joseph',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1952-04-09'),
+    isLiving: true,
+    birthPlace: 'Saigon, Vietnam',
+    occupation: 'Retired Professor',
+    bio: 'Professor of History at UC Berkeley for 30 years.',
+  });
+  linkChild(james, mary, joseph);
+
+  const anna = await make({
+    firstName: 'Anna',
+    lastName: 'Pham',
+    gender: 'female',
+    birthDate: new Date('1954-06-25'),
+    isLiving: true,
+    birthPlace: 'Can Tho, Vietnam',
+    occupation: 'Retired Pediatrician',
+    bio: 'Devoted her career to child healthcare.',
+  });
+  linkSpouses(joseph, anna, 'married');
+
+  // ---- 6. Rose ----
+  const rose = await make({
+    firstName: 'Rose',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1954-10-17'),
+    isLiving: true,
+    birthPlace: 'Saigon, Vietnam',
+    occupation: 'Retired Fashion Designer',
+    bio: 'Founded a boutique clothing line in the 1980s.',
+  });
+  linkChild(james, mary, rose);
+
+  const paul = await make({
+    firstName: 'Paul',
+    lastName: 'Yamamoto',
+    gender: 'male',
+    birthDate: new Date('1952-07-03'),
+    isLiving: true,
+    birthPlace: 'Tokyo, Japan',
+    occupation: 'Retired Architect',
+    bio: 'Designed the Nguyen family home. Married Rose in 1974.',
+  });
+  linkSpouses(rose, paul, 'married');
+
+  // ---- 7. Peter ----
+  const peter = await make({
+    firstName: 'Peter',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1956-01-28'),
+    isLiving: true,
+    birthPlace: 'Saigon, Vietnam',
+    occupation: 'Retired Pilot',
+    bio: 'Commercial airline pilot for 25 years. Flew over 2 million miles.',
+  });
+  linkChild(james, mary, peter);
+
+  const grace = await make({
+    firstName: 'Grace',
+    lastName: 'Liu',
+    gender: 'female',
+    birthDate: new Date('1958-09-12'),
+    isLiving: true,
+    birthPlace: 'Taipei, Taiwan',
+    occupation: 'Retired Flight Attendant',
+    bio: 'Met Peter on a flight to Tokyo. Married in 1979.',
+  });
+  linkSpouses(peter, grace, 'married');
+
+  // ---- 8. Teresa ----
+  const teresa = await make({
+    firstName: 'Teresa',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1958-06-05'),
+    isLiving: true,
+    birthPlace: 'Saigon, Vietnam',
+    occupation: 'Retired Judge',
+    bio: 'First Vietnamese-American woman judge in Santa Clara County.',
+  });
+  linkChild(james, mary, teresa);
+
+  const andrewChu = await make({
+    firstName: 'Andrew',
+    lastName: 'Chu',
+    gender: 'male',
+    birthDate: new Date('1956-12-14'),
+    isLiving: true,
+    birthPlace: 'San Francisco, CA',
+    occupation: 'Retired Attorney',
+    bio: 'Partner at a major law firm for 20 years. Married Teresa in 1980.',
+  });
+  linkSpouses(teresa, andrewChu, 'married');
+
+  // ---- 9. Patrick ----
+  const patrick = await make({
+    firstName: 'Patrick',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1960-03-21'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Retired Firefighter',
+    bio: 'Served the San Jose Fire Department for 28 years.',
+  });
+  linkChild(james, mary, patrick);
+
+  const diana = await make({
+    firstName: 'Diana',
+    lastName: 'Santos',
+    gender: 'female',
+    birthDate: new Date('1962-08-30'),
+    isLiving: true,
+    birthPlace: 'Manila, Philippines',
+    occupation: 'Nurse Practitioner',
+    bio: 'Emigrated from the Philippines. Married Patrick in 1984.',
+  });
+  linkSpouses(patrick, diana, 'married');
+
+  // ---- 10. Christina (youngest) ----
+  const christina = await make({
+    firstName: 'Christina',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1963-11-08'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Retired Music Teacher',
+    bio: 'Youngest child of James & Mary. Taught piano for 30 years.',
+  });
+  linkChild(james, mary, christina);
+
+  const brian = await make({
+    firstName: 'Brian',
+    lastName: "O'Malley",
+    gender: 'male',
+    birthDate: new Date('1961-05-16'),
+    isLiving: true,
+    birthPlace: 'Dublin, Ireland',
+    occupation: 'Pub Owner',
+    bio: 'Emigrated from Ireland. Married Christina in 1986. Runs a pub in San Jose.',
+  });
+  linkSpouses(christina, brian, 'married');
+
   // Save Gen 1 & Gen 2
   await james.save();
   await mary.save();
 
   // ═══════════════════════════════════════════════════════════
-  //  GEN 3 — Grandparents
-  //  Children of Robert & Elizabeth (widowed couple):
-  //    William & Patricia (married), David & Jennifer (married), Helen (single)
-  //  Child of Susan & Richard (BEFORE divorce):
-  //    Amy & Tommy (married)
-  //  Child of Susan & Frank (AFTER remarriage):
-  //    Nathan (single) - shows child from 2nd marriage
-  //  Child of Richard & Linda (AFTER remarriage):
-  //    Jessica & Mark (married) - shows child from 2nd marriage
+  //  GEN 3 — EXISTING: Children of Robert & Susan branches
   // ═══════════════════════════════════════════════════════════
 
   const william = await make({
@@ -272,7 +463,6 @@ async function seed() {
   await robert.save();
   await elizabeth.save();
 
-  // ---- Amy — child of Susan & Richard (BEFORE their divorce) ----
   const amy = await make({
     firstName: 'Amy',
     lastName: 'Tran',
@@ -297,7 +487,6 @@ async function seed() {
   });
   linkSpouses(amy, tommy, 'married');
 
-  // ---- Nathan — child of Susan & Frank (AFTER Susan remarried) ----
   const nathan = await make({
     firstName: 'Nathan',
     lastName: 'Hoang',
@@ -310,7 +499,6 @@ async function seed() {
   });
   linkChild(frank, susan, nathan);
 
-  // ---- Jessica — child of Richard & Linda (AFTER Richard remarried) ----
   const jessica = await make({
     firstName: 'Jessica',
     lastName: 'Tran',
@@ -323,7 +511,7 @@ async function seed() {
   });
   linkChild(richard, linda, jessica);
 
-  const mark = await make({
+  const markChen = await make({
     firstName: 'Mark',
     lastName: 'Chen',
     gender: 'male',
@@ -333,7 +521,7 @@ async function seed() {
     occupation: 'Chef',
     bio: 'Married Jessica in 2020. Passionate about fusion cuisine.',
   });
-  linkSpouses(jessica, mark, 'married');
+  linkSpouses(jessica, markChen, 'married');
 
   await susan.save();
   await richard.save();
@@ -341,12 +529,427 @@ async function seed() {
   await linda.save();
 
   // ═══════════════════════════════════════════════════════════
-  //  GEN 4 — Parents
-  //  Michael & Sarah (married) — children of William & Patricia
-  //  Emily (single) — child of William & Patricia
-  //  Daniel & Lisa (married) — children of David & Jennifer
-  //  Kevin (grad student) — child of David & Jennifer
-  //  Jake — child of Amy & Tommy
+  //  GEN 3 — NEW: Children of the 8 new siblings
+  // ═══════════════════════════════════════════════════════════
+
+  // ── Branch 1: Thomas & Margaret's children ──
+  const philip = await make({
+    firstName: 'Philip',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1968-02-10'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Orthopedic Surgeon',
+    bio: 'Chief of surgery at a regional hospital.',
+  });
+  linkChild(thomas, margaret, philip);
+
+  const sandraKim = await make({
+    firstName: 'Sandra',
+    lastName: 'Kim',
+    gender: 'female',
+    birthDate: new Date('1970-05-22'),
+    isLiving: true,
+    birthPlace: 'Los Angeles, CA',
+    occupation: 'Hospital Administrator',
+    bio: 'Met Philip during medical residency.',
+  });
+  linkSpouses(philip, sandraKim, 'married');
+
+  const dianeNguyen = await make({
+    firstName: 'Diane',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1972-09-15'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Journalist',
+    bio: 'Award-winning investigative reporter.',
+  });
+  linkChild(thomas, margaret, dianeNguyen);
+
+  const rogerHall = await make({
+    firstName: 'Roger',
+    lastName: 'Hall',
+    gender: 'male',
+    birthDate: new Date('1970-04-08'),
+    isLiving: true,
+    birthPlace: 'Portland, OR',
+    occupation: 'TV Producer',
+    bio: 'Met Diane while working on a documentary.',
+  });
+  linkSpouses(dianeNguyen, rogerHall, 'married');
+
+  await thomas.save();
+  await margaret.save();
+
+  // ── Branch 2: Catherine & Henry's children ──
+  const steven = await make({
+    firstName: 'Steven',
+    lastName: 'Lam',
+    gender: 'male',
+    birthDate: new Date('1970-03-28'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Investment Banker',
+    bio: 'Managing director at a top financial firm.',
+  });
+  linkChild(henry, catherine, steven);
+
+  const karenWu = await make({
+    firstName: 'Karen',
+    lastName: 'Wu',
+    gender: 'female',
+    birthDate: new Date('1972-07-15'),
+    isLiving: true,
+    birthPlace: 'Shanghai, China',
+    occupation: 'Corporate Lawyer',
+    bio: 'Partner at a major international law firm.',
+  });
+  linkSpouses(steven, karenWu, 'married');
+
+  const michelle = await make({
+    firstName: 'Michelle',
+    lastName: 'Lam',
+    gender: 'female',
+    birthDate: new Date('1974-12-09'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Interior Designer',
+    bio: 'Runs a successful design studio in San Francisco.',
+  });
+  linkChild(henry, catherine, michelle);
+
+  const jasonRivera = await make({
+    firstName: 'Jason',
+    lastName: 'Rivera',
+    gender: 'male',
+    birthDate: new Date('1972-08-22'),
+    isLiving: true,
+    birthPlace: 'Miami, FL',
+    occupation: 'Restaurant Chain Owner',
+    bio: 'Owns 5 restaurants across the Bay Area.',
+  });
+  linkSpouses(michelle, jasonRivera, 'married');
+
+  await catherine.save();
+  await henry.save();
+
+  // ── Branch 3: Joseph & Anna's children ──
+  const christopher = await make({
+    firstName: 'Christopher',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1977-06-12'),
+    isLiving: true,
+    birthPlace: 'Berkeley, CA',
+    occupation: 'Environmental Scientist',
+    bio: 'Works on climate change research at a national lab.',
+  });
+  linkChild(joseph, anna, christopher);
+
+  const lauraChen = await make({
+    firstName: 'Laura',
+    lastName: 'Chen',
+    gender: 'female',
+    birthDate: new Date('1979-10-28'),
+    isLiving: true,
+    birthPlace: 'San Diego, CA',
+    occupation: 'Marine Biologist',
+    bio: 'Studies coral reef ecosystems in the Pacific.',
+  });
+  linkSpouses(christopher, lauraChen, 'married');
+
+  const stephanieN = await make({
+    firstName: 'Stephanie',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1980-01-20'),
+    isLiving: true,
+    birthPlace: 'Berkeley, CA',
+    occupation: 'Psychologist',
+    bio: 'Specializes in family therapy and child psychology.',
+  });
+  linkChild(joseph, anna, stephanieN);
+
+  const marcusBennett = await make({
+    firstName: 'Marcus',
+    lastName: 'Bennett',
+    gender: 'male',
+    birthDate: new Date('1978-08-05'),
+    isLiving: true,
+    birthPlace: 'Atlanta, GA',
+    occupation: 'High School Principal',
+    bio: 'Passionate about education reform.',
+  });
+  linkSpouses(stephanieN, marcusBennett, 'married');
+
+  await joseph.save();
+  await anna.save();
+
+  // ── Branch 4: Rose & Paul's children ──
+  const kenneth = await make({
+    firstName: 'Kenneth',
+    lastName: 'Yamamoto',
+    gender: 'male',
+    birthDate: new Date('1976-04-17'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Aerospace Engineer',
+    bio: 'Works on satellite systems at NASA JPL.',
+  });
+  linkChild(paul, rose, kenneth);
+
+  const rebeccaTorres = await make({
+    firstName: 'Rebecca',
+    lastName: 'Torres',
+    gender: 'female',
+    birthDate: new Date('1978-11-25'),
+    isLiving: true,
+    birthPlace: 'Albuquerque, NM',
+    occupation: 'Astrophysicist',
+    bio: 'Researches dark matter at Caltech.',
+  });
+  linkSpouses(kenneth, rebeccaTorres, 'married');
+
+  const samantha = await make({
+    firstName: 'Samantha',
+    lastName: 'Yamamoto',
+    gender: 'female',
+    birthDate: new Date('1979-08-03'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Cardiologist',
+    bio: 'Leads the cardiology department at Stanford Hospital.',
+  });
+  linkChild(paul, rose, samantha);
+
+  const vinodPatel = await make({
+    firstName: 'Vinod',
+    lastName: 'Patel',
+    gender: 'male',
+    birthDate: new Date('1977-02-14'),
+    isLiving: true,
+    birthPlace: 'Mumbai, India',
+    occupation: 'Biotech CEO',
+    bio: 'Founded a biotech startup focused on gene therapy.',
+  });
+  linkSpouses(samantha, vinodPatel, 'married');
+
+  await rose.save();
+  await paul.save();
+
+  // ── Branch 5: Peter & Grace's children ──
+  const raymond = await make({
+    firstName: 'Raymond',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1980-07-04'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Airline Captain',
+    bio: 'Followed his father into aviation. Captains 787 Dreamliners.',
+  });
+  linkChild(peter, grace, raymond);
+
+  const heatherBrooks = await make({
+    firstName: 'Heather',
+    lastName: 'Brooks',
+    gender: 'female',
+    birthDate: new Date('1982-01-15'),
+    isLiving: true,
+    birthPlace: 'Denver, CO',
+    occupation: 'Physical Therapist',
+    bio: 'Specializes in sports rehabilitation.',
+  });
+  linkSpouses(raymond, heatherBrooks, 'married');
+
+  const christineN = await make({
+    firstName: 'Christine',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1983-11-28'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Veterinary Surgeon',
+    bio: 'Runs an emergency animal hospital.',
+  });
+  linkChild(peter, grace, christineN);
+
+  const samuelOkafor = await make({
+    firstName: 'Samuel',
+    lastName: 'Okafor',
+    gender: 'male',
+    birthDate: new Date('1981-06-20'),
+    isLiving: true,
+    birthPlace: 'Lagos, Nigeria',
+    occupation: 'Neurosurgeon',
+    bio: 'Emigrated from Nigeria. One of the top neurosurgeons in the Bay Area.',
+  });
+  linkSpouses(christineN, samuelOkafor, 'married');
+
+  await peter.save();
+  await grace.save();
+
+  // ── Branch 6: Teresa & Andrew Chu's children ──
+  const derekChu = await make({
+    firstName: 'Derek',
+    lastName: 'Chu',
+    gender: 'male',
+    birthDate: new Date('1982-05-18'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Tech Startup Founder',
+    bio: 'Founded an AI company that was acquired by a major tech firm.',
+  });
+  linkChild(andrewChu, teresa, derekChu);
+
+  const vanessaLee = await make({
+    firstName: 'Vanessa',
+    lastName: 'Lee',
+    gender: 'female',
+    birthDate: new Date('1984-09-23'),
+    isLiving: true,
+    birthPlace: 'Seoul, South Korea',
+    occupation: 'Venture Capitalist',
+    bio: 'Partner at a leading Silicon Valley VC firm.',
+  });
+  linkSpouses(derekChu, vanessaLee, 'married');
+
+  const monicaChu = await make({
+    firstName: 'Monica',
+    lastName: 'Chu',
+    gender: 'female',
+    birthDate: new Date('1985-02-07'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Surgeon',
+    bio: 'Specializes in minimally invasive surgery.',
+  });
+  linkChild(andrewChu, teresa, monicaChu);
+
+  const ryanTanaka = await make({
+    firstName: 'Ryan',
+    lastName: 'Tanaka',
+    gender: 'male',
+    birthDate: new Date('1983-11-30'),
+    isLiving: true,
+    birthPlace: 'Honolulu, HI',
+    occupation: 'Orthopedic Surgeon',
+    bio: 'Former college basketball player turned surgeon.',
+  });
+  linkSpouses(monicaChu, ryanTanaka, 'married');
+
+  await teresa.save();
+  await andrewChu.save();
+
+  // ── Branch 7: Patrick & Diana's children ──
+  const gabriel = await make({
+    firstName: 'Gabriel',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1985-03-14'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Emergency Room Doctor',
+    bio: 'Inspired by his father to serve the community.',
+  });
+  linkChild(patrick, diana, gabriel);
+
+  const yukiMori = await make({
+    firstName: 'Yuki',
+    lastName: 'Mori',
+    gender: 'female',
+    birthDate: new Date('1987-06-22'),
+    isLiving: true,
+    birthPlace: 'Osaka, Japan',
+    occupation: 'Pediatric Nurse',
+    bio: 'Met Gabriel during a medical mission trip to Japan.',
+  });
+  linkSpouses(gabriel, yukiMori, 'married');
+
+  const valentina = await make({
+    firstName: 'Valentina',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1988-10-09'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Fashion Designer',
+    bio: 'Inherited her aunt Rose\'s talent for design.',
+  });
+  linkChild(patrick, diana, valentina);
+
+  const connorWalsh = await make({
+    firstName: 'Connor',
+    lastName: 'Walsh',
+    gender: 'male',
+    birthDate: new Date('1986-07-28'),
+    isLiving: true,
+    birthPlace: 'Chicago, IL',
+    occupation: 'Sports Agent',
+    bio: 'Represents several professional athletes.',
+  });
+  linkSpouses(valentina, connorWalsh, 'married');
+
+  await patrick.save();
+  await diana.save();
+
+  // ── Branch 8: Christina & Brian's children ──
+  const seanOM = await make({
+    firstName: 'Sean',
+    lastName: "O'Malley",
+    gender: 'male',
+    birthDate: new Date('1987-04-12'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Music Producer',
+    bio: 'Inherited his mother\'s musical talent. Grammy-nominated producer.',
+  });
+  linkChild(brian, christina, seanOM);
+
+  const fionaByrne = await make({
+    firstName: 'Fiona',
+    lastName: 'Byrne',
+    gender: 'female',
+    birthDate: new Date('1989-08-05'),
+    isLiving: true,
+    birthPlace: 'Cork, Ireland',
+    occupation: 'Singer-Songwriter',
+    bio: 'Met Sean at a music festival in Dublin.',
+  });
+  linkSpouses(seanOM, fionaByrne, 'married');
+
+  const siennaOM = await make({
+    firstName: 'Sienna',
+    lastName: "O'Malley",
+    gender: 'female',
+    birthDate: new Date('1990-01-30'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Yoga Instructor & Wellness Coach',
+    bio: 'Runs a popular wellness studio.',
+  });
+  linkChild(brian, christina, siennaOM);
+
+  const nolanHarper = await make({
+    firstName: 'Nolan',
+    lastName: 'Harper',
+    gender: 'male',
+    birthDate: new Date('1988-12-18'),
+    isLiving: true,
+    birthPlace: 'Nashville, TN',
+    occupation: 'Country Music Artist',
+    bio: 'Has 3 platinum albums. Married Sienna in 2014.',
+  });
+  linkSpouses(siennaOM, nolanHarper, 'married');
+
+  await christina.save();
+  await brian.save();
+
+  // ═══════════════════════════════════════════════════════════
+  //  GEN 4 — EXISTING: Children of Robert/Susan branches
   // ═══════════════════════════════════════════════════════════
 
   const michael = await make({
@@ -390,8 +993,6 @@ async function seed() {
 
   await william.save();
   await patricia.save();
-  await michael.save();
-  await emily.save();
 
   const daniel = await make({
     firstName: 'Daniel',
@@ -406,7 +1007,7 @@ async function seed() {
   });
   linkChild(david, jennifer, daniel);
 
-  const lisa = await make({
+  const lisaWang = await make({
     firstName: 'Lisa',
     lastName: 'Wang',
     gender: 'female',
@@ -417,7 +1018,7 @@ async function seed() {
     email: 'lisa.wang@email.com',
     bio: 'Leads product strategy at a growing startup.',
   });
-  linkSpouses(daniel, lisa, 'married');
+  linkSpouses(daniel, lisaWang, 'married');
 
   const kevin = await make({
     firstName: 'Kevin',
@@ -434,10 +1035,7 @@ async function seed() {
 
   await david.save();
   await jennifer.save();
-  await daniel.save();
-  await kevin.save();
 
-  // ---- Jake — child of Amy & Tommy ----
   const jake = await make({
     firstName: 'Jake',
     lastName: 'Diaz',
@@ -446,16 +1044,507 @@ async function seed() {
     isLiving: true,
     birthPlace: 'San Jose, CA',
     occupation: 'High School Student',
-    bio: 'Star of the soccer team. Grandparents Susan and Richard are divorced.',
+    bio: 'Star of the soccer team.',
   });
   linkChild(tommy, amy, jake);
 
   await tommy.save();
   await amy.save();
-  await jake.save();
 
   // ═══════════════════════════════════════════════════════════
-  //  GEN 5 — Current generation (youngest)
+  //  GEN 4 — NEW: Grandchildren of the 8 new siblings
+  // ═══════════════════════════════════════════════════════════
+
+  // ── Branch 1: Philip & Sandra's children ──
+  const justinN = await make({
+    firstName: 'Justin',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('1993-07-18'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Surgeon',
+    bio: 'Following in his father\'s footsteps in medicine.',
+  });
+  linkChild(philip, sandraKim, justinN);
+
+  const meganScott = await make({
+    firstName: 'Megan',
+    lastName: 'Scott',
+    gender: 'female',
+    birthDate: new Date('1995-01-25'),
+    isLiving: true,
+    birthPlace: 'Portland, OR',
+    occupation: 'Registered Nurse',
+    bio: 'Works alongside Justin at the same hospital.',
+  });
+  linkSpouses(justinN, meganScott, 'married');
+
+  const natalieN = await make({
+    firstName: 'Natalie',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('1996-11-03'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Art Gallery Owner',
+    bio: 'Curates contemporary Asian-American art.',
+  });
+  linkChild(philip, sandraKim, natalieN);
+
+  // ── Diane & Roger's children ──
+  const brandonHall = await make({
+    firstName: 'Brandon',
+    lastName: 'Hall',
+    gender: 'male',
+    birthDate: new Date('1995-06-20'),
+    isLiving: true,
+    birthPlace: 'Portland, OR',
+    occupation: 'Documentary Filmmaker',
+    bio: 'Award-winning filmmaker like his parents.',
+  });
+  linkChild(rogerHall, dianeNguyen, brandonHall);
+
+  const alyssaChoi = await make({
+    firstName: 'Alyssa',
+    lastName: 'Choi',
+    gender: 'female',
+    birthDate: new Date('1997-03-14'),
+    isLiving: true,
+    birthPlace: 'Seattle, WA',
+    occupation: 'Film Editor',
+    bio: 'Met Brandon on a film set.',
+  });
+  linkSpouses(brandonHall, alyssaChoi, 'married');
+
+  await philip.save();
+  await sandraKim.save();
+  await dianeNguyen.save();
+  await rogerHall.save();
+
+  // ── Branch 2: Steven & Karen's children ──
+  const tiffanyLam = await make({
+    firstName: 'Tiffany',
+    lastName: 'Lam',
+    gender: 'female',
+    birthDate: new Date('1997-05-14'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Financial Analyst',
+    bio: 'Works at a top Wall Street firm.',
+  });
+  linkChild(steven, karenWu, tiffanyLam);
+
+  const derekMoon = await make({
+    firstName: 'Derek',
+    lastName: 'Moon',
+    gender: 'male',
+    birthDate: new Date('1995-10-30'),
+    isLiving: true,
+    birthPlace: 'New York, NY',
+    occupation: 'Hedge Fund Manager',
+    bio: 'Power couple in the finance world with Tiffany.',
+  });
+  linkSpouses(tiffanyLam, derekMoon, 'married');
+
+  const brandonLam = await make({
+    firstName: 'Brandon',
+    lastName: 'Lam',
+    gender: 'male',
+    birthDate: new Date('2000-02-18'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Medical Student',
+    bio: 'Studying medicine at UCSF.',
+  });
+  linkChild(steven, karenWu, brandonLam);
+
+  // ── Michelle & Jason's children ──
+  const carlosRivera = await make({
+    firstName: 'Carlos',
+    lastName: 'Rivera',
+    gender: 'male',
+    birthDate: new Date('1998-09-05'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Executive Chef',
+    bio: 'Runs his father\'s flagship restaurant.',
+  });
+  linkChild(jasonRivera, michelle, carlosRivera);
+
+  const priyaSharma = await make({
+    firstName: 'Priya',
+    lastName: 'Sharma',
+    gender: 'female',
+    birthDate: new Date('1999-11-20'),
+    isLiving: true,
+    birthPlace: 'New Delhi, India',
+    occupation: 'Food Critic & Blogger',
+    bio: 'Met Carlos at a culinary competition.',
+  });
+  linkSpouses(carlosRivera, priyaSharma, 'married');
+
+  await steven.save();
+  await karenWu.save();
+  await michelle.save();
+  await jasonRivera.save();
+
+  // ── Branch 3: Christopher & Laura's children ──
+  const alexN = await make({
+    firstName: 'Alex',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('2002-03-30'),
+    isLiving: true,
+    birthPlace: 'Berkeley, CA',
+    occupation: 'Graduate Student',
+    bio: 'Studying marine biology at Scripps Institution.',
+  });
+  linkChild(christopher, lauraChen, alexN);
+
+  const zoeAdams = await make({
+    firstName: 'Zoe',
+    lastName: 'Adams',
+    gender: 'female',
+    birthDate: new Date('2003-07-15'),
+    isLiving: true,
+    birthPlace: 'Santa Barbara, CA',
+    occupation: 'Graduate Student',
+    bio: 'Childhood sweethearts with Alex. Also studying marine science.',
+  });
+  linkSpouses(alexN, zoeAdams, 'married');
+
+  const bellaN = await make({
+    firstName: 'Bella',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('2005-12-18'),
+    isLiving: true,
+    birthPlace: 'Berkeley, CA',
+    occupation: 'College Student',
+    bio: 'Pre-med at UCLA.',
+  });
+  linkChild(christopher, lauraChen, bellaN);
+
+  // ── Stephanie & Marcus's children ──
+  const jordanBennett = await make({
+    firstName: 'Jordan',
+    lastName: 'Bennett',
+    gender: 'male',
+    birthDate: new Date('2004-05-22'),
+    isLiving: true,
+    birthPlace: 'Berkeley, CA',
+    occupation: 'College Student',
+    bio: 'Studying psychology at Stanford.',
+  });
+  linkChild(marcusBennett, stephanieN, jordanBennett);
+
+  const taylorBennett = await make({
+    firstName: 'Taylor',
+    lastName: 'Bennett',
+    gender: 'female',
+    birthDate: new Date('2007-08-11'),
+    isLiving: true,
+    birthPlace: 'Berkeley, CA',
+    occupation: 'High School Student',
+    bio: 'Star of the debate team.',
+  });
+  linkChild(marcusBennett, stephanieN, taylorBennett);
+
+  await christopher.save();
+  await lauraChen.save();
+  await stephanieN.save();
+  await marcusBennett.save();
+
+  // ── Branch 4: Kenneth & Rebecca's children ──
+  const hannahY = await make({
+    firstName: 'Hannah',
+    lastName: 'Yamamoto',
+    gender: 'female',
+    birthDate: new Date('2001-06-28'),
+    isLiving: true,
+    birthPlace: 'Pasadena, CA',
+    occupation: 'Aerospace Engineer',
+    bio: 'Following her father into space engineering at SpaceX.',
+  });
+  linkChild(kenneth, rebeccaTorres, hannahY);
+
+  const noahClarke = await make({
+    firstName: 'Noah',
+    lastName: 'Clarke',
+    gender: 'male',
+    birthDate: new Date('2000-03-09'),
+    isLiving: true,
+    birthPlace: 'Houston, TX',
+    occupation: 'NASA Flight Controller',
+    bio: 'Works in Mission Control at Johnson Space Center.',
+  });
+  linkSpouses(hannahY, noahClarke, 'married');
+
+  const aidenY = await make({
+    firstName: 'Aiden',
+    lastName: 'Yamamoto',
+    gender: 'male',
+    birthDate: new Date('2004-10-15'),
+    isLiving: true,
+    birthPlace: 'Pasadena, CA',
+    occupation: 'College Student',
+    bio: 'Studying astrophysics at MIT.',
+  });
+  linkChild(kenneth, rebeccaTorres, aidenY);
+
+  // ── Samantha & Vinod's children ──
+  const raviPatel = await make({
+    firstName: 'Ravi',
+    lastName: 'Patel',
+    gender: 'male',
+    birthDate: new Date('2003-01-22'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Biotech Researcher',
+    bio: 'Works at his father\'s biotech company.',
+  });
+  linkChild(vinodPatel, samantha, raviPatel);
+
+  const emmaSullivan = await make({
+    firstName: 'Emma',
+    lastName: 'Sullivan',
+    gender: 'female',
+    birthDate: new Date('2004-05-11'),
+    isLiving: true,
+    birthPlace: 'Boston, MA',
+    occupation: 'Genetic Counselor',
+    bio: 'Met Ravi at a biotech conference.',
+  });
+  linkSpouses(raviPatel, emmaSullivan, 'married');
+
+  await kenneth.save();
+  await rebeccaTorres.save();
+  await samantha.save();
+  await vinodPatel.save();
+
+  // ── Branch 5: Raymond & Heather's children ──
+  const tylerN = await make({
+    firstName: 'Tyler',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('2005-03-17'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'College Student',
+    bio: 'Studying aviation at Embry-Riddle. Wants to be a pilot like his dad and grandpa.',
+  });
+  linkChild(raymond, heatherBrooks, tylerN);
+
+  const madisonN = await make({
+    firstName: 'Madison',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('2007-11-22'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'High School Student',
+    bio: 'Aspiring physical therapist like her mom.',
+  });
+  linkChild(raymond, heatherBrooks, madisonN);
+
+  // ── Christine & Samuel's children ──
+  const zaraOkafor = await make({
+    firstName: 'Zara',
+    lastName: 'Okafor',
+    gender: 'female',
+    birthDate: new Date('2003-05-10'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Medical Student',
+    bio: 'Studying neuroscience at Johns Hopkins.',
+  });
+  linkChild(samuelOkafor, christineN, zaraOkafor);
+
+  const isaacWong = await make({
+    firstName: 'Isaac',
+    lastName: 'Wong',
+    gender: 'male',
+    birthDate: new Date('2001-09-14'),
+    isLiving: true,
+    birthPlace: 'San Francisco, CA',
+    occupation: 'Neuroscience Researcher',
+    bio: 'Childhood friends with Zara, now married.',
+  });
+  linkSpouses(zaraOkafor, isaacWong, 'married');
+
+  await raymond.save();
+  await heatherBrooks.save();
+  await christineN.save();
+  await samuelOkafor.save();
+
+  // ── Branch 6: Derek Chu & Vanessa's children ──
+  const jasmineChu = await make({
+    firstName: 'Jasmine',
+    lastName: 'Chu',
+    gender: 'female',
+    birthDate: new Date('2006-07-12'),
+    isLiving: true,
+    birthPlace: 'Palo Alto, CA',
+    occupation: 'College Student',
+    bio: 'Studying computer science at Stanford.',
+  });
+  linkChild(derekChu, vanessaLee, jasmineChu);
+
+  const dylanChu = await make({
+    firstName: 'Dylan',
+    lastName: 'Chu',
+    gender: 'male',
+    birthDate: new Date('2009-01-25'),
+    isLiving: true,
+    birthPlace: 'Palo Alto, CA',
+    occupation: 'High School Student',
+    bio: 'Robotics team captain.',
+  });
+  linkChild(derekChu, vanessaLee, dylanChu);
+
+  // ── Monica & Ryan Tanaka's children ──
+  const haileyTanaka = await make({
+    firstName: 'Hailey',
+    lastName: 'Tanaka',
+    gender: 'female',
+    birthDate: new Date('2007-10-08'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'College Student',
+    bio: 'Pre-med student at UC Berkeley.',
+  });
+  linkChild(ryanTanaka, monicaChu, haileyTanaka);
+
+  const lucasTanaka = await make({
+    firstName: 'Lucas',
+    lastName: 'Tanaka',
+    gender: 'male',
+    birthDate: new Date('2010-06-18'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'High School Student',
+    bio: 'Passionate about basketball and coding.',
+  });
+  linkChild(ryanTanaka, monicaChu, lucasTanaka);
+
+  await derekChu.save();
+  await vanessaLee.save();
+  await monicaChu.save();
+  await ryanTanaka.save();
+
+  // ── Branch 7: Gabriel & Yuki's children ──
+  const mateoN = await make({
+    firstName: 'Mateo',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('2010-04-05'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'High School Student',
+    bio: 'Bilingual in Japanese and English. Loves martial arts.',
+  });
+  linkChild(gabriel, yukiMori, mateoN);
+
+  const sofiaN = await make({
+    firstName: 'Sofia',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('2013-08-18'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Middle School Student',
+    bio: 'Talented pianist. Takes after grandma Christina.',
+  });
+  linkChild(gabriel, yukiMori, sofiaN);
+
+  // ── Valentina & Connor's children ──
+  const liamWalsh = await make({
+    firstName: 'Liam',
+    lastName: 'Walsh',
+    gender: 'male',
+    birthDate: new Date('2012-01-30'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Middle School Student',
+    bio: 'Star athlete. Plays baseball and soccer.',
+  });
+  linkChild(connorWalsh, valentina, liamWalsh);
+
+  const ellaWalsh = await make({
+    firstName: 'Ella',
+    lastName: 'Walsh',
+    gender: 'female',
+    birthDate: new Date('2015-05-20'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Elementary School Student',
+    bio: 'Loves fashion design like her mom Valentina.',
+  });
+  linkChild(connorWalsh, valentina, ellaWalsh);
+
+  await gabriel.save();
+  await yukiMori.save();
+  await valentina.save();
+  await connorWalsh.save();
+
+  // ── Branch 8: Sean & Fiona's children ──
+  const kaiOM = await make({
+    firstName: 'Kai',
+    lastName: "O'Malley",
+    gender: 'male',
+    birthDate: new Date('2012-09-08'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Middle School Student',
+    bio: 'Already plays guitar and drums. Musical prodigy.',
+  });
+  linkChild(seanOM, fionaByrne, kaiOM);
+
+  const lunaOM = await make({
+    firstName: 'Luna',
+    lastName: "O'Malley",
+    gender: 'female',
+    birthDate: new Date('2015-03-22'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    occupation: 'Elementary School Student',
+    bio: 'Has a beautiful singing voice like her mom Fiona.',
+  });
+  linkChild(seanOM, fionaByrne, lunaOM);
+
+  // ── Sienna & Nolan's children ──
+  const declanHarper = await make({
+    firstName: 'Declan',
+    lastName: 'Harper',
+    gender: 'male',
+    birthDate: new Date('2014-11-05'),
+    isLiving: true,
+    birthPlace: 'Nashville, TN',
+    occupation: 'Middle School Student',
+    bio: 'Learning guitar from his dad Nolan.',
+  });
+  linkChild(nolanHarper, siennaOM, declanHarper);
+
+  const ivyHarper = await make({
+    firstName: 'Ivy',
+    lastName: 'Harper',
+    gender: 'female',
+    birthDate: new Date('2017-07-14'),
+    isLiving: true,
+    birthPlace: 'Nashville, TN',
+    occupation: 'Elementary School Student',
+    bio: 'Loves yoga with mom and music with dad.',
+  });
+  linkChild(nolanHarper, siennaOM, ivyHarper);
+
+  await seanOM.save();
+  await fionaByrne.save();
+  await siennaOM.save();
+  await nolanHarper.save();
+
+  // ═══════════════════════════════════════════════════════════
+  //  GEN 5 — EXISTING: Children of Robert/Susan branches
   // ═══════════════════════════════════════════════════════════
 
   const ethan = await make({
@@ -482,8 +1571,6 @@ async function seed() {
 
   await michael.save();
   await sarah.save();
-  await ethan.save();
-  await olivia.save();
 
   const sophia = await make({
     firstName: 'Sophia',
@@ -494,7 +1581,7 @@ async function seed() {
     birthPlace: 'Seattle, WA',
     bio: "Named after her great-grandmother's middle name.",
   });
-  linkChild(daniel, lisa, sophia);
+  linkChild(daniel, lisaWang, sophia);
 
   const lucas = await make({
     firstName: 'Lucas',
@@ -505,14 +1592,11 @@ async function seed() {
     birthPlace: 'Santa Clara, CA',
     bio: 'The youngest member of the Nguyen family!',
   });
-  linkChild(daniel, lisa, lucas);
+  linkChild(daniel, lisaWang, lucas);
 
   await daniel.save();
-  await lisa.save();
-  await sophia.save();
-  await lucas.save();
+  await lisaWang.save();
 
-  // ---- Child of Jessica & Mark (Richard's 2nd marriage grandchild) ----
   const mia = await make({
     firstName: 'Mia',
     lastName: 'Chen',
@@ -520,11 +1604,10 @@ async function seed() {
     birthDate: new Date('2023-12-01'),
     isLiving: true,
     birthPlace: 'Oakland, CA',
-    bio: 'Jessica and Mark\'s first child. Richard\'s granddaughter from his 2nd marriage.',
+    bio: 'Jessica and Mark\'s first child.',
   });
-  linkChild(mark, jessica, mia);
+  linkChild(markChen, jessica, mia);
 
-  // ---- Lily — child of Elizabeth & George (widowed→remarried child) ----
   const lily = await make({
     firstName: 'Lily',
     lastName: 'Martinez',
@@ -533,26 +1616,183 @@ async function seed() {
     isLiving: true,
     birthPlace: 'San Diego, CA',
     occupation: 'Kindergartener',
-    bio: 'Daughter of Elizabeth and George. A cheerful addition to the family.',
+    bio: 'Daughter of Elizabeth and George.',
   });
   linkChild(george, elizabeth, lily);
 
-  await mark.save();
+  await markChen.save();
   await jessica.save();
-  await mia.save();
   await nathan.save();
   await helen.save();
   await george.save();
   await elizabeth.save();
+
+  // ═══════════════════════════════════════════════════════════
+  //  GEN 5 — NEW: Great-grandchildren of the 8 new siblings
+  // ═══════════════════════════════════════════════════════════
+
+  // ── Branch 1: Justin & Megan's child ──
+  const owenN = await make({
+    firstName: 'Owen',
+    lastName: 'Nguyen',
+    gender: 'male',
+    birthDate: new Date('2020-08-12'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    bio: 'Loves building Legos and playing with his cousin Harper.',
+  });
+  linkChild(justinN, meganScott, owenN);
+
+  // ── Branch 1: Brandon Hall & Alyssa's child ──
+  const harperHall = await make({
+    firstName: 'Harper',
+    lastName: 'Hall',
+    gender: 'female',
+    birthDate: new Date('2022-04-30'),
+    isLiving: true,
+    birthPlace: 'Portland, OR',
+    bio: 'Already loves cameras and storytelling.',
+  });
+  linkChild(brandonHall, alyssaChoi, harperHall);
+
+  await justinN.save();
+  await meganScott.save();
+  await brandonHall.save();
+  await alyssaChoi.save();
+  await natalieN.save();
+
+  // ── Branch 2: Tiffany & Derek Moon's child ──
+  const leoMoon = await make({
+    firstName: 'Leo',
+    lastName: 'Moon',
+    gender: 'male',
+    birthDate: new Date('2023-01-08'),
+    isLiving: true,
+    birthPlace: 'New York, NY',
+    bio: 'Named after his great-grandfather Henry.',
+  });
+  linkChild(derekMoon, tiffanyLam, leoMoon);
+
+  // ── Branch 2: Carlos & Priya's child ──
+  const mayaRivera = await make({
+    firstName: 'Maya',
+    lastName: 'Rivera',
+    gender: 'female',
+    birthDate: new Date('2025-06-15'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    bio: 'The newest addition to the Rivera-Sharma family.',
+  });
+  linkChild(carlosRivera, priyaSharma, mayaRivera);
+
+  await tiffanyLam.save();
+  await derekMoon.save();
+  await brandonLam.save();
+  await carlosRivera.save();
+  await priyaSharma.save();
+
+  // ── Branch 3: Alex & Zoe's child ──
+  const chloeN = await make({
+    firstName: 'Chloe',
+    lastName: 'Nguyen',
+    gender: 'female',
+    birthDate: new Date('2025-09-01'),
+    isLiving: true,
+    birthPlace: 'San Diego, CA',
+    bio: 'Born near the ocean, just like her marine biologist parents dreamed.',
+  });
+  linkChild(alexN, zoeAdams, chloeN);
+
+  await alexN.save();
+  await zoeAdams.save();
+  await bellaN.save();
+  await jordanBennett.save();
+  await taylorBennett.save();
+
+  // ── Branch 4: Hannah & Noah's child ──
+  const ariaClarke = await make({
+    firstName: 'Aria',
+    lastName: 'Clarke',
+    gender: 'female',
+    birthDate: new Date('2024-11-20'),
+    isLiving: true,
+    birthPlace: 'Houston, TX',
+    bio: 'Born in Houston near NASA. Parents joke she\'ll be an astronaut.',
+  });
+  linkChild(noahClarke, hannahY, ariaClarke);
+
+  // ── Branch 4: Ravi & Emma's child ──
+  const niaPatel = await make({
+    firstName: 'Nia',
+    lastName: 'Patel',
+    gender: 'female',
+    birthDate: new Date('2026-01-15'),
+    isLiving: true,
+    birthPlace: 'San Jose, CA',
+    bio: 'The newest baby in the Patel family.',
+  });
+  linkChild(raviPatel, emmaSullivan, niaPatel);
+
+  await hannahY.save();
+  await noahClarke.save();
+  await aidenY.save();
+  await raviPatel.save();
+  await emmaSullivan.save();
+
+  // ── Branch 5: Zara & Isaac's child ──
+  const nadiaWong = await make({
+    firstName: 'Nadia',
+    lastName: 'Wong',
+    gender: 'female',
+    birthDate: new Date('2025-03-20'),
+    isLiving: true,
+    birthPlace: 'Baltimore, MD',
+    bio: 'Born while her parents were at Johns Hopkins.',
+  });
+  linkChild(isaacWong, zaraOkafor, nadiaWong);
+
+  await zaraOkafor.save();
+  await isaacWong.save();
+  await tylerN.save();
+  await madisonN.save();
+
+  // Save remaining Gen 4 without Gen 5 children
+  await jasmineChu.save();
+  await dylanChu.save();
+  await haileyTanaka.save();
+  await lucasTanaka.save();
+  await mateoN.save();
+  await sofiaN.save();
+  await liamWalsh.save();
+  await ellaWalsh.save();
+  await kaiOM.save();
+  await lunaOM.save();
+  await declanHarper.save();
+  await ivyHarper.save();
+
+  // Save Gen 5
+  await ethan.save();
+  await olivia.save();
+  await sophia.save();
+  await lucas.save();
+  await mia.save();
   await lily.save();
+  await owenN.save();
+  await harperHall.save();
+  await leoMoon.save();
+  await mayaRivera.save();
+  await chloeN.save();
+  await ariaClarke.save();
+  await niaPatel.save();
+  await nadiaWong.save();
+  await jake.save();
+  await kevin.save();
+  await emily.save();
 
   // ═══════════════════════════════════════════════════════════
   //  ELIZABETH PARK'S SIDE — Hidden from the Nguyen root view
-  //  2 generations up + 1 sibling downstream (with family)
-  //  Visible only when you "explore" from Elizabeth's card
   // ═══════════════════════════════════════════════════════════
 
-  // ── Park Gen 0 — Elizabeth's Grandparents ──────────────────
   const joonho = await make({
     firstName: 'Joon-ho',
     lastName: 'Park',
@@ -562,7 +1802,7 @@ async function seed() {
     isLiving: false,
     birthPlace: 'Busan, South Korea',
     occupation: 'Fisherman',
-    bio: 'Elizabeth\'s paternal grandfather. Lived through the Korean War.',
+    bio: 'Elizabeth\'s paternal grandfather.',
   });
 
   const soojin = await make({
@@ -574,11 +1814,10 @@ async function seed() {
     isLiving: false,
     birthPlace: 'Busan, South Korea',
     occupation: 'Homemaker',
-    bio: 'Elizabeth\'s paternal grandmother. Known for her kimchi recipe.',
+    bio: 'Elizabeth\'s paternal grandmother.',
   });
   linkSpouses(joonho, soojin, 'married');
 
-  // ── Park Gen 1 — Elizabeth's Parents ───────────────────────
   const sanghoon = await make({
     firstName: 'Sang-hoon',
     lastName: 'Park',
@@ -588,7 +1827,7 @@ async function seed() {
     isLiving: false,
     birthPlace: 'Busan, South Korea',
     occupation: 'School Principal',
-    bio: 'Elizabeth\'s father. Valued education above all.',
+    bio: 'Elizabeth\'s father.',
   });
   linkChild(joonho, soojin, sanghoon);
 
@@ -601,17 +1840,15 @@ async function seed() {
     isLiving: false,
     birthPlace: 'Seoul, South Korea',
     occupation: 'Calligrapher',
-    bio: 'Elizabeth\'s mother. Emigrated to the US in 1960.',
+    bio: 'Elizabeth\'s mother.',
   });
   linkSpouses(sanghoon, miyoung, 'married');
 
-  // Link Elizabeth to her parents
   elizabeth.fatherId = sanghoon._id;
   elizabeth.motherId = miyoung._id;
   sanghoon.childrenIds.push(elizabeth._id);
   miyoung.childrenIds.push(elizabeth._id);
 
-  // ── Park Gen 2 — Elizabeth's Brother ───────────────────────
   const junseo = await make({
     firstName: 'Jun-seo',
     lastName: 'Park',
@@ -620,7 +1857,7 @@ async function seed() {
     isLiving: true,
     birthPlace: 'Seoul, South Korea',
     occupation: 'Retired Doctor',
-    bio: 'Elizabeth\'s older brother. Retired cardiologist.',
+    bio: 'Elizabeth\'s older brother.',
   });
   linkChild(sanghoon, miyoung, junseo);
 
@@ -632,11 +1869,10 @@ async function seed() {
     isLiving: true,
     birthPlace: 'Incheon, South Korea',
     occupation: 'Retired Librarian',
-    bio: 'Jun-seo\'s wife. Moved to the US in 1980.',
+    bio: 'Jun-seo\'s wife.',
   });
   linkSpouses(junseo, hana, 'married');
 
-  // ── Park Gen 3 — Jun-seo & Hana's Children ────────────────
   const yuna = await make({
     firstName: 'Yuna',
     lastName: 'Park',
@@ -661,7 +1897,6 @@ async function seed() {
   });
   linkChild(junseo, hana, minho);
 
-  // ── Park Gen 4 — Yuna's child (downstream) ────────────────
   const sora = await make({
     firstName: 'Sora',
     lastName: 'Park',
@@ -675,7 +1910,6 @@ async function seed() {
   yuna.childrenIds.push(sora._id);
   sora.motherId = yuna._id;
 
-  // Save all Park-side members
   await joonho.save();
   await soojin.save();
   await sanghoon.save();
@@ -702,40 +1936,36 @@ async function seed() {
   console.log(`  Tree:     ${tree.name}`);
   console.log(`  Members:  ${total}`);
   console.log('');
-  console.log('  ── NGUYEN SIDE (root: James) ──────────────────────────');
-  console.log('  Gen 1  James [deceased] --- Mary [deceased]           (both DECEASED)');
-  console.log('  Gen 2  Robert [deceased] --[widowed]-- Elizabeth');
-  console.log('         Elizabeth --[married]-- George                  (WIDOWED -> REMARRIED)');
-  console.log('         Susan --[divorced]-- Richard                    (DIVORCED)');
-  console.log('         Susan --[married]-- Frank                      (DIVORCED -> REMARRIED)');
-  console.log('         Richard --[married]-- Linda                    (DIVORCED -> REMARRIED)');
-  console.log('  Gen 3  William --- Patricia  (children of Robert & Elizabeth)');
-  console.log('         David --- Jennifer    (children of Robert & Elizabeth)');
-  console.log('         Helen (single)        (child of Robert & Elizabeth)');
-  console.log('         Lily                  (child of Elizabeth & George, REMARRIED)');
-  console.log('         Amy --- Tommy         (child of Susan & Richard, BEFORE divorce)');
-  console.log('         Nathan (single)       (child of Susan & Frank, AFTER remarriage)');
-  console.log('         Jessica --- Mark      (child of Richard & Linda, AFTER remarriage)');
-  console.log('  Gen 4  Michael --- Sarah | Emily | Daniel --- Lisa | Kevin | Jake');
-  console.log('  Gen 5  Ethan | Olivia | Sophia | Lucas | Mia');
+  console.log('  ── JAMES & MARY\'S 10 CHILDREN ─────────────────────────');
+  console.log('  Gen 1  James [deceased] --- Mary [deceased]');
+  console.log('  Gen 2  (10 children):');
+  console.log('    1. Thomas --- Margaret O\'Brien');
+  console.log('    2. Robert [deceased] --[widowed]-- Elizabeth → remarried George');
+  console.log('    3. Catherine --- Henry Lam');
+  console.log('    4. Susan --[divorced]-- Richard → Susan remarried Frank, Richard remarried Linda');
+  console.log('    5. Joseph --- Anna Pham');
+  console.log('    6. Rose --- Paul Yamamoto');
+  console.log('    7. Peter --- Grace Liu');
+  console.log('    8. Teresa --- Andrew Chu');
+  console.log('    9. Patrick --- Diana Santos');
+  console.log('   10. Christina --- Brian O\'Malley');
   console.log('');
-  console.log('  ── PARK SIDE (Elizabeth\'s family, explore from her card) ──');
-  console.log('  PGen 0  Joon-ho Park --- Soo-jin Lee    (Elizabeth\'s grandparents)');
-  console.log('  PGen 1  Sang-hoon Park --- Mi-young Kim  (Elizabeth\'s parents)');
-  console.log('  PGen 2  Elizabeth Park | Jun-seo Park --- Hana Yoon (sibling)');
-  console.log('  PGen 3  Yuna Park | Min-ho Park          (Jun-seo\'s children)');
-  console.log('  PGen 4  Sora Park                        (Yuna\'s daughter)');
+  console.log('  ── 8 NEW FAMILY BRANCHES ──────────────────────────────');
+  console.log('  Branch 1 (Thomas): Philip→Justin→Owen | Diane→Brandon→Harper');
+  console.log('  Branch 2 (Catherine): Steven→Tiffany→Leo | Michelle→Carlos→Maya');
+  console.log('  Branch 3 (Joseph): Christopher→Alex→Chloe | Stephanie→Jordan,Taylor');
+  console.log('  Branch 4 (Rose): Kenneth→Hannah→Aria | Samantha→Ravi→Nia');
+  console.log('  Branch 5 (Peter): Raymond→Tyler,Madison | Christine→Zara→Nadia');
+  console.log('  Branch 6 (Teresa): Derek→Jasmine,Dylan | Monica→Hailey,Lucas');
+  console.log('  Branch 7 (Patrick): Gabriel→Mateo,Sofia | Valentina→Liam,Ella');
+  console.log('  Branch 8 (Christina): Sean→Kai,Luna | Sienna→Declan,Ivy');
   console.log('');
-  console.log('  SCENARIOS COVERED:');
-  console.log('    Living married        -> William & Patricia -> Michael/Emily');
-  console.log('    Deceased parents      -> James & Mary -> Robert/Susan');
-  console.log('    Widowed + Remarried   -> Elizabeth widowed from Robert, remarried George');
-  console.log('    Child from remarriage -> Lily (Elizabeth & George)');
-  console.log('    Divorced + Remarried  -> Susan divorced Richard, remarried Frank -> Nathan');
-  console.log('                          -> Richard divorced Susan, remarried Linda -> Jessica');
-  console.log('    Children from 1st     -> Amy (Susan & Richard)');
-  console.log('    Children from 2nd     -> Nathan (Susan & Frank), Jessica (Richard & Linda)');
-  console.log('    Explore other side    -> Elizabeth\'s Park family (hidden from Nguyen root)');
+  console.log('  ── ORIGINAL BRANCHES (Robert & Susan) ─────────────────');
+  console.log('  Robert branch: William→Michael→Ethan,Olivia | David→Daniel→Sophia,Lucas | Helen | Lily');
+  console.log('  Susan branch:  Amy→Jake | Nathan | Jessica→Mia');
+  console.log('');
+  console.log('  ── PARK SIDE (Elizabeth\'s family) ─────────────────────');
+  console.log('  Joon-ho → Sang-hoon → Elizabeth, Jun-seo → Yuna→Sora, Min-ho');
   console.log('================================================================');
   console.log('  Demo User ID:', demoUser._id.toString());
   console.log('\n  Open http://localhost:3000 -> "Try Demo" to explore!\n');

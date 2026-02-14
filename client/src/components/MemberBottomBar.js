@@ -59,12 +59,12 @@ function MemberBottomBar({ member, onClose, onViewProfile }) {
           <span className="bottom-bar-life">
             {birthYear && (
               <>
-                {deathYear ? `${birthYear} – ${deathYear}` : `b. ${birthYear}`}
+                {deathYear ? `${birthYear} – ${deathYear}` : `sinh ${birthYear}`}
               </>
             )}
             {age != null && (
               <span className="bottom-bar-age">
-                ({member.isLiving ? `age ${age}` : `died at ${age}`})
+                ({member.isLiving ? `${age} tuổi` : `mất lúc ${age} tuổi`})
               </span>
             )}
           </span>
@@ -78,15 +78,15 @@ function MemberBottomBar({ member, onClose, onViewProfile }) {
               member.isLiving ? 'living' : 'deceased'
             }`}
           >
-            {member.isLiving ? '● Living' : '○ Deceased'}
+            {member.isLiving ? '● Còn sống' : '○ Đã mất'}
           </span>
           {member.gender && (
             <span className="bottom-bar-gender">
               {member.gender === 'male'
-                ? '♂ Male'
+                ? '♂ Nam'
                 : member.gender === 'female'
-                ? '♀ Female'
-                : '⚥ Other'}
+                ? '♀ Nữ'
+                : '⚥ Khác'}
             </span>
           )}
         </div>
@@ -96,24 +96,24 @@ function MemberBottomBar({ member, onClose, onViewProfile }) {
         <div className="bottom-bar-family">
           {fatherName && (
             <span className="bottom-bar-relation">
-              👨 <strong>Father:</strong> {fatherName}
+              👨 <strong>Cha:</strong> {fatherName}
             </span>
           )}
           {motherName && (
             <span className="bottom-bar-relation">
-              👩 <strong>Mother:</strong> {motherName}
+              👩 <strong>Mẹ:</strong> {motherName}
             </span>
           )}
           {spouseInfo.length > 0 &&
             spouseInfo.map((sp, i) => (
               <span key={i} className="bottom-bar-relation">
-                ❤️ <strong>{sp.status === 'divorced' ? 'Ex' : 'Spouse'}:</strong>{' '}
+                ❤️ <strong>{sp.status === 'divorced' ? 'Cựu' : 'Vợ/Chồng'}:</strong>{' '}
                 {sp.name}
               </span>
             ))}
           {childCount > 0 && (
             <span className="bottom-bar-relation">
-              👶 <strong>Children:</strong> {childCount}
+              👶 <strong>Con:</strong> {childCount}
             </span>
           )}
         </div>
@@ -123,7 +123,7 @@ function MemberBottomBar({ member, onClose, onViewProfile }) {
             className="btn btn-primary btn-sm"
             onClick={() => onViewProfile && onViewProfile(member)}
           >
-            View Profile
+            Xem Hồ Sơ
           </button>
           <button className="bottom-bar-close" onClick={onClose}>
             ✕

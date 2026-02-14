@@ -8,7 +8,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <Link to="/">🌳 Family Tree</Link>
+        <Link to="/">🌳 Gia Phả</Link>
       </div>
       <div className="navbar-user">
         {user?.profilePhoto && (
@@ -20,7 +20,7 @@ function Navbar() {
         )}
         <span className="navbar-name">{user?.displayName}</span>
         <button className="btn btn-outline" onClick={logout}>
-          Log Out
+          Đăng Xuất
         </button>
       </div>
     </nav>

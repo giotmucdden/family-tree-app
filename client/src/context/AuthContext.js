@@ -14,17 +14,13 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = () => {
-    window.location.href = 'http://localhost:5000/api/auth/facebook';
-  };
-
   const logout = async () => {
     await logoutApi();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

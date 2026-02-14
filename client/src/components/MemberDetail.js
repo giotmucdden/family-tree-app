@@ -22,13 +22,13 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
   const resolveName = (ref) => {
     if (!ref) return null;
     if (typeof ref === 'object') return `${ref.firstName} ${ref.lastName}`;
-    return 'Linked';
+    return 'Đã liên kết';
   };
 
   const statusIcon = (status) => {
-    if (status === 'married') return '💚 Married';
-    if (status === 'divorced') return '⚡ Divorced';
-    if (status === 'widowed') return '🕊️ Widowed';
+    if (status === 'married') return '💚 Kết hôn';
+    if (status === 'divorced') return '⚡ Ly hôn';
+    if (status === 'widowed') return '🕊️ Góa';
     return status;
   };
 
@@ -37,6 +37,12 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
     if (status === 'divorced') return 'badge-divorced';
     if (status === 'widowed') return 'badge-widowed';
     return '';
+  };
+
+  const genderText = (gender) => {
+    if (gender === 'male') return 'Nam';
+    if (gender === 'female') return 'Nữ';
+    return 'Khác';
   };
 
   const generations = allMembers
@@ -65,50 +71,50 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
       <div className="member-info">
         {member.gender && (
           <div className="info-row">
-            <span className="info-label">Gender</span>
+            <span className="info-label">Giới tính</span>
             <span className="info-value">
-              {member.gender.charAt(0).toUpperCase() + member.gender.slice(1)}
+              {genderText(member.gender)}
             </span>
           </div>
         )}
 
         {member.birthDate && (
           <div className="info-row">
-            <span className="info-label">Born</span>
+            <span className="info-label">Ngày sinh</span>
             <span className="info-value">
-              {new Date(member.birthDate).toLocaleDateString()}
+              {new Date(member.birthDate).toLocaleDateString('vi-VN')}
             </span>
           </div>
         )}
 
         {!member.isLiving && member.deathDate && (
           <div className="info-row">
-            <span className="info-label">Died</span>
+            <span className="info-label">Ngày mất</span>
             <span className="info-value">
-              {new Date(member.deathDate).toLocaleDateString()}
+              {new Date(member.deathDate).toLocaleDateString('vi-VN')}
             </span>
           </div>
         )}
 
         <div className="info-row">
-          <span className="info-label">Status</span>
+          <span className="info-label">Tình trạng</span>
           <span
             className={`info-badge ${member.isLiving ? 'living' : 'deceased'}`}
           >
-            {member.isLiving ? '● Living' : '○ Deceased'}
+            {member.isLiving ? '● Còn sống' : '○ Đã mất'}
           </span>
         </div>
 
         {member.birthPlace && (
           <div className="info-row">
-            <span className="info-label">Birth Place</span>
+            <span className="info-label">Nơi sinh</span>
             <span className="info-value">{member.birthPlace}</span>
           </div>
         )}
 
         {member.occupation && (
           <div className="info-row">
-            <span className="info-label">Occupation</span>
+            <span className="info-label">Nghề nghiệp</span>
             <span className="info-value">{member.occupation}</span>
           </div>
         )}
@@ -122,16 +128,16 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
         {member.phone && (
           <div className="info-row">
-            <span className="info-label">Phone</span>
+            <span className="info-label">Điện thoại</span>
             <span className="info-value">{member.phone}</span>
           </div>
         )}
 
-        <div className="info-section-label">Family</div>
+        <div className="info-section-label">Gia đình</div>
 
         {resolveName(member.fatherId) && (
           <div className="info-row">
-            <span className="info-label">👨 Father</span>
+            <span className="info-label">👨 Cha</span>
             <span className="info-value info-link-father">
               {resolveName(member.fatherId)}
             </span>
@@ -140,7 +146,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
         {resolveName(member.motherId) && (
           <div className="info-row">
-            <span className="info-label">👩 Mother</span>
+            <span className="info-label">👩 Mẹ</span>
             <span className="info-value info-link-mother">
               {resolveName(member.motherId)}
             </span>
@@ -150,7 +156,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
         {member.spouses && member.spouses.length > 0 && (
           <>
             <div className="info-section-label" style={{ marginTop: 8 }}>
-              Spouses
+              Vợ/Chồng
             </div>
             {member.spouses.map((sp, idx) => {
               const spouseName = resolveName(sp.memberId);
@@ -168,13 +174,13 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
         {member.childrenIds?.length > 0 && (
           <div className="info-row">
-            <span className="info-label">Children</span>
+            <span className="info-label">Con cái</span>
             <span className="info-value">
               {member.childrenIds
                 .map((c) =>
                   typeof c === 'object'
                     ? `${c.firstName} ${c.lastName}`
-                    : 'Unknown'
+                    : 'Không rõ'
                 )
                 .join(', ')}
             </span>
@@ -183,7 +189,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
         {member.bio && (
           <div className="info-row info-bio">
-            <span className="info-label">Bio</span>
+            <span className="info-label">Tiểu sử</span>
             <p className="info-value">{member.bio}</p>
           </div>
         )}
@@ -191,13 +197,13 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
       <div className="member-detail-actions">
         <button className="btn btn-primary btn-sm" onClick={onEdit}>
-          ✏️ Edit
+          ✏️ Sửa
         </button>
         <button className="btn btn-outline btn-sm" onClick={onAddChild}>
-          👶 Add Child
+          👶 Thêm Con
         </button>
         <button className="btn btn-danger btn-sm" onClick={onDelete}>
-          🗑️ Delete
+          🗑️ Xóa
         </button>
       </div>
 
@@ -207,10 +213,10 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
             className="btn btn-branch"
             onClick={() => onCreateBranch(member._id)}
           >
-            🌳 Create Family Tree ({generations} generations)
+            🌳 Tạo Gia Phả ({generations} thế hệ)
           </button>
           <p className="branch-hint">
-            Branch this member and all descendants into a new tree on your Dashboard.
+            Tách thành viên này và tất cả con cháu thành cây gia phả mới trên Bảng điều khiển.
           </p>
         </div>
       )}

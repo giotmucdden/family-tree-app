@@ -21,7 +21,7 @@ function Dashboard() {
       const data = await getTrees();
       setTrees(data);
     } catch (err) {
-      console.error('Failed to load trees:', err);
+      console.error('Không thể tải danh sách cây:', err);
     } finally {
       setLoading(false);
     }
@@ -31,7 +31,7 @@ function Dashboard() {
     e.preventDefault();
     try {
       const tree = await createTree({
-        name: newTreeName || 'My Family Tree',
+        name: newTreeName || 'Gia Phả Của Tôi',
         description: newTreeDesc,
       });
       setTrees([...trees, tree]);
@@ -40,18 +40,18 @@ function Dashboard() {
       setNewTreeDesc('');
       navigate(`/tree/${tree._id}`);
     } catch (err) {
-      alert('Failed to create tree: ' + err.message);
+      alert('Tạo cây thất bại: ' + err.message);
     }
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Delete this family tree? This cannot be undone.'))
+    if (!window.confirm('Xóa cây gia phả này? Hành động này không thể hoàn tác.'))
       return;
     try {
       await deleteTree(id);
       setTrees(trees.filter((t) => t._id !== id));
     } catch (err) {
-      alert('Failed to delete: ' + err.message);
+      alert('Xóa thất bại: ' + err.message);
     }
   }
 
@@ -67,33 +67,33 @@ function Dashboard() {
     <div className="dashboard">
       <div className="dashboard-header">
         <div>
-          <h1>Welcome, {user?.firstName || user?.displayName}!</h1>
-          <p>Manage your family trees below</p>
+          <h1>Xin chào, {user?.firstName || user?.displayName}!</h1>
+          <p>Quản lý cây gia phả của bạn bên dưới</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          + New Family Tree
+          + Tạo Gia Phả Mới
         </button>
       </div>
 
       {showCreate && (
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Create New Family Tree</h2>
+            <h2>Tạo Gia Phả Mới</h2>
             <form onSubmit={handleCreate}>
               <div className="form-group">
-                <label>Tree Name</label>
+                <label>Tên Gia Phả</label>
                 <input
                   type="text"
-                  placeholder="e.g. The Smith Family"
+                  placeholder="Ví dụ: Gia Đình Nguyễn"
                   value={newTreeName}
                   onChange={(e) => setNewTreeName(e.target.value)}
                   autoFocus
                 />
               </div>
               <div className="form-group">
-                <label>Description (optional)</label>
+                <label>Mô tả (không bắt buộc)</label>
                 <textarea
-                  placeholder="A brief description of this family tree"
+                  placeholder="Mô tả ngắn về gia phả này"
                   value={newTreeDesc}
                   onChange={(e) => setNewTreeDesc(e.target.value)}
                 />
@@ -104,10 +104,10 @@ function Dashboard() {
                   className="btn btn-outline"
                   onClick={() => setShowCreate(false)}
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Create Tree
+                  Tạo Gia Phả
                 </button>
               </div>
             </form>
@@ -118,13 +118,13 @@ function Dashboard() {
       {trees.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon">🌱</span>
-          <h2>No family trees yet</h2>
-          <p>Create your first family tree to get started!</p>
+          <h2>Chưa có gia phả nào</h2>
+          <p>Tạo gia phả đầu tiên để bắt đầu!</p>
           <button
             className="btn btn-primary"
             onClick={() => setShowCreate(true)}
           >
-            Create Your First Tree
+            Tạo Gia Phả Đầu Tiên
           </button>
         </div>
       ) : (
@@ -139,9 +139,9 @@ function Dashboard() {
               <h3>{tree.name}</h3>
               {tree.description && <p>{tree.description}</p>}
               <div className="tree-card-meta">
-                <span>{tree.members?.length || 0} members</span>
+                <span>{tree.members?.length || 0} thành viên</span>
                 <span>
-                  {new Date(tree.createdAt).toLocaleDateString()}
+                  {new Date(tree.createdAt).toLocaleDateString('vi-VN')}
                 </span>
               </div>
               <button
@@ -151,7 +151,7 @@ function Dashboard() {
                   handleDelete(tree._id);
                 }}
               >
-                Delete
+                Xóa
               </button>
             </div>
           ))}

@@ -162,6 +162,16 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
                 bloodlineSpouse = lookup[sid];
               }
             });
+            // Fallback: if no non-divorced bloodline spouse found,
+            // try divorced ones so child still connects to the tree
+            if (!bloodlineSpouse) {
+              (inHMem.spouses || []).forEach((sp) => {
+                const sid = rid(sp.memberId);
+                if (sid && isBloodline(sid) && !bloodlineSpouse) {
+                  bloodlineSpouse = lookup[sid];
+                }
+              });
+            }
             primary = bloodlineSpouse || (fInH ? father : mother);
           } else {
             primary = father;
@@ -2143,10 +2153,10 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     // ── Legend ────────────────────────────────────────────
     const legend = svg.append('g').attr('transform', 'translate(14,14)');
     const legendItems = [
-      { type: 'group', label: 'Married / Widowed' },
-      { type: 'deceased', label: 'Deceased (grey)' },
-      { type: 'divorced', label: 'Divorced (separate)' },
-      { type: 'explore', label: 'Explore hidden side' },
+      { type: 'group', label: 'Kết hôn / Góa' },
+      { type: 'deceased', label: 'Đã mất (xám)' },
+      { type: 'divorced', label: 'Ly hôn (tách)' },
+      { type: 'explore', label: 'Khám phá nhánh ẩn' },
     ];
     const lW = 180;
     const lH = legendItems.length * 22 + 14;
@@ -2219,16 +2229,16 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           <button
             className={`view-btn ${viewMode === VIEWS.TREE ? 'active' : ''}`}
             onClick={() => setViewMode(VIEWS.TREE)}
-            title="Tree View — top to bottom, left to right for age"
+            title="Chế độ Cây — trên xuống dưới, trái sang phải theo tuổi"
           >
-            🌳 Tree
+            🌳 Cây
           </button>
           <button
             className={`view-btn ${viewMode === VIEWS.BRANCH ? 'active' : ''}`}
             onClick={() => setViewMode(VIEWS.BRANCH)}
-            title="Branch View — left to right, top to bottom for age"
+            title="Chế độ Nhánh — trái sang phải, trên xuống dưới theo tuổi"
           >
-            🌿 Branch
+            🌿 Nhánh
           </button>
         </div>
         <span className="filter-divider">|</span>
@@ -2240,20 +2250,20 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
             value={d3Layout}
             onChange={(e) => setD3Layout(e.target.value)}
           >
-            <option value={D3_LAYOUTS.TIDY}>Tidy Tree</option>
-            <option value={D3_LAYOUTS.CLUSTER}>Cluster Tree</option>
-            <option value={D3_LAYOUTS.RADIAL}>Radial Tidy Tree</option>
-            <option value={D3_LAYOUTS.TREE_OF_LIFE}>Tree of Life</option>
-            <option value={D3_LAYOUTS.INDENTED}>Indented Tree</option>
+            <option value={D3_LAYOUTS.TIDY}>Cây Gọn</option>
+            <option value={D3_LAYOUTS.CLUSTER}>Cây Cụm</option>
+            <option value={D3_LAYOUTS.RADIAL}>Cây Tròn</option>
+            <option value={D3_LAYOUTS.TREE_OF_LIFE}>Cây Đời</option>
+            <option value={D3_LAYOUTS.INDENTED}>Cây Thụt</option>
           </select>
         </div>
         <span className="filter-divider">|</span>
-        <span className="filter-label">Show:</span>
+        <span className="filter-label">Lọc:</span>
         {[
-          { key: FILTERS.ALL, label: '🌳 All', color: '' },
-          { key: FILTERS.LIVING, label: '💚 Living', color: 'living' },
-          { key: FILTERS.DECEASED, label: '✝ Deceased', color: 'deceased' },
-          { key: FILTERS.DIVORCED, label: '⚡ Divorced', color: 'divorced' },
+          { key: FILTERS.ALL, label: '🌳 Tất cả', color: '' },
+          { key: FILTERS.LIVING, label: '💚 Còn sống', color: 'living' },
+          { key: FILTERS.DECEASED, label: '✝ Đã mất', color: 'deceased' },
+          { key: FILTERS.DIVORCED, label: '⚡ Ly hôn', color: 'divorced' },
         ].map((f) => (
           <button key={f.key} className={`filter-btn ${f.color} ${activeFilter === f.key ? 'active' : ''}`} onClick={() => setActiveFilter(f.key)}>
             {f.label}
@@ -2263,26 +2273,26 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
 
       {viewRootId && viewRootName && (
         <div className="tree-root-banner">
-          <span>👑 Viewing from: <strong>{viewRootName}</strong></span>
-          <button className="btn btn-outline btn-sm" onClick={resetRoot}>
-            ↩ Reset to full tree
-          </button>
+          <span>👑 Đang xem từ: <strong>{viewRootName}</strong></span>
+            <button className="btn btn-outline btn-sm" onClick={resetRoot}>
+              ↩ Quay về cây đầy đủ
+            </button>
         </div>
       )}
 
       {(!members || members.length === 0) && (
-        <div className="empty-tree"><span className="empty-icon">🌱</span><h3>Your tree is empty</h3><p>Add your first family member to get started!</p></div>
+        <div className="empty-tree"><span className="empty-icon">🌱</span><h3>Cây gia phả trống</h3><p>Thêm thành viên đầu tiên để bắt đầu!</p></div>
       )}
       <svg ref={svgRef} className="tree-svg" />
 
       <div className="tree-zoom-controls">
-        <button className="zoom-btn" onClick={handleZoomIn} title="Zoom In">＋</button>
-        <button className="zoom-btn" onClick={handleZoomOut} title="Zoom Out">－</button>
-        <button className="zoom-btn zoom-fit" onClick={fitToScreen} title="Fit to Screen">⊞</button>
+        <button className="zoom-btn" onClick={handleZoomIn} title="Phóng to">＋</button>
+        <button className="zoom-btn" onClick={handleZoomOut} title="Thu nhỏ">－</button>
+        <button className="zoom-btn zoom-fit" onClick={fitToScreen} title="Vừa màn hình">⊞</button>
       </div>
 
       <div className="canvas-controls">
-        <span>🖱️ Scroll to zoom • Drag to pan • Hover cards for actions • 🔍 Explore hidden ancestors</span>
+        <span>🖱️ Cuộn để phóng • Kéo để di chuyển • Di chuột vào thẻ để xem thao tác • 🔍 Khám phá tổ tiên ẩn</span>
       </div>
     </div>
   );
