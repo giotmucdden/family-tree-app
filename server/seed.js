@@ -48,9 +48,9 @@ async function seed() {
   });
 
   const tree = await FamilyTree.create({
-    name: 'The Nguyen Family',
+    name: 'Gia Phả Họ Nguyễn',
     description:
-      'Large family tree with 10 children, divorced-remarried, widowed-remarried, and 120+ members across 5+ generations.',
+      'Đại gia đình 3 nhánh (James, Hùng, Lan) — 260+ thành viên qua 6 thế hệ, từ cụ Đức & cụ Thị.',
     owner: demoUser._id,
   });
 
@@ -72,9 +72,6 @@ async function seed() {
     mother.childrenIds.push(child._id);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  //  GEN 1 — Great-Great-Grandparents  (DECEASED)
-  // ═══════════════════════════════════════════════════════════
   const james = await make({
     firstName: 'James',
     lastName: 'Nguyen',
@@ -100,6 +97,996 @@ async function seed() {
   });
   linkSpouses(james, mary, 'married');
 
+  // ═══════════════════════════════════════════════════════════
+  //  GEN 0 — Great-Great-Great-Grandparents  (DECEASED)
+  //  Parents of James, Hùng, and Lan
+  // ═══════════════════════════════════════════════════════════
+  const duc = await make({
+    firstName: 'Đức',
+    lastName: 'Nguyễn',
+    gender: 'male',
+    birthDate: new Date('1895-06-10'),
+    deathDate: new Date('1970-02-15'),
+    isLiving: false,
+    birthPlace: 'Huế, Vietnam',
+    occupation: 'Village Elder / Scholar',
+    bio: 'Patriarch of the Nguyễn clan. Respected Confucian scholar and village leader.',
+  });
+
+  const thi = await make({
+    firstName: 'Thị',
+    lastName: 'Trần',
+    gender: 'female',
+    birthDate: new Date('1898-12-01'),
+    deathDate: new Date('1975-08-20'),
+    isLiving: false,
+    birthPlace: 'Huế, Vietnam',
+    occupation: 'Herbalist / Midwife',
+    bio: 'Matriarch of the family. Known healer who helped hundreds of families.',
+  });
+  linkSpouses(duc, thi, 'married');
+
+  // Link James as child of Đức & Thị
+  linkChild(duc, thi, james);
+
+  // ── Sibling 1 of James: Hùng Nguyễn ──
+  const hung = await make({
+    firstName: 'Hùng',
+    lastName: 'Nguyễn',
+    gender: 'male',
+    birthDate: new Date('1922-09-05'),
+    deathDate: new Date('2001-04-12'),
+    isLiving: false,
+    birthPlace: 'Huế, Vietnam',
+    occupation: 'School Principal',
+    bio: 'Second son of Đức & Thị. Dedicated educator who built schools in rural Vietnam.',
+  });
+  linkChild(duc, thi, hung);
+
+  const mei = await make({
+    firstName: 'Mei',
+    lastName: 'Wong',
+    gender: 'female',
+    birthDate: new Date('1925-03-18'),
+    deathDate: new Date('2008-11-05'),
+    isLiving: false,
+    birthPlace: 'Cholon, Vietnam',
+    occupation: 'School Teacher',
+    bio: 'Married Hùng in 1946. They built a school together in the countryside.',
+  });
+  linkSpouses(hung, mei, 'married');
+
+  // ── Sibling 2 of James: Lan Nguyễn ──
+  const lan = await make({
+    firstName: 'Lan',
+    lastName: 'Nguyễn',
+    gender: 'female',
+    birthDate: new Date('1926-01-20'),
+    deathDate: new Date('2010-07-03'),
+    isLiving: false,
+    birthPlace: 'Huế, Vietnam',
+    occupation: 'Silk Merchant',
+    bio: 'Youngest child of Đức & Thị. Built a successful silk trading business.',
+  });
+  linkChild(duc, thi, lan);
+
+  const tan = await make({
+    firstName: 'Tấn',
+    lastName: 'Lê',
+    gender: 'male',
+    birthDate: new Date('1924-08-14'),
+    deathDate: new Date('2003-12-25'),
+    isLiving: false,
+    birthPlace: 'Đà Nẵng, Vietnam',
+    occupation: 'Shipping Captain',
+    bio: 'Married Lan in 1948. Captained merchant ships along the coast of Vietnam.',
+  });
+  linkSpouses(lan, tan, 'married');
+
+  await duc.save();
+  await thi.save();
+
+
+  // ═══════════════════════════════════════════════════════════
+  //  HÙNG BRANCH — 5 children, 4 downstream generations
+  // ═══════════════════════════════════════════════════════════
+
+  // ── Hùng's Gen 2: 5 children ──
+
+  // H-1. Bảo Nguyễn
+  const bao = await make({
+    firstName: 'Bảo', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('1947-03-12'), isLiving: true,
+    birthPlace: 'Huế, Vietnam', occupation: 'Retired Doctor',
+    bio: 'Eldest son of Hùng & Mei. Practiced medicine for 40 years.',
+  });
+  linkChild(hung, mei, bao);
+  const thuyBao = await make({
+    firstName: 'Thúy', lastName: 'Phạm', gender: 'female',
+    birthDate: new Date('1949-07-22'), isLiving: true,
+    birthPlace: 'Nha Trang, Vietnam', occupation: 'Retired Nurse',
+    bio: 'Married Bảo in 1970. They ran a clinic together.',
+  });
+  linkSpouses(bao, thuyBao, 'married');
+
+  // H-2. Hạnh Nguyễn
+  const hanh = await make({
+    firstName: 'Hạnh', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('1949-11-08'), isLiving: true,
+    birthPlace: 'Huế, Vietnam', occupation: 'Retired Professor',
+    bio: 'Literature professor at University of Saigon for 30 years.',
+  });
+  linkChild(hung, mei, hanh);
+  const quang = await make({
+    firstName: 'Quang', lastName: 'Trương', gender: 'male',
+    birthDate: new Date('1947-05-15'), isLiving: true,
+    birthPlace: 'Đà Lạt, Vietnam', occupation: 'Retired Poet',
+    bio: 'Published poet. Married Hạnh in 1971.',
+  });
+  linkSpouses(hanh, quang, 'married');
+
+  // H-3. Minh Nguyễn
+  const minhH = await make({
+    firstName: 'Minh', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('1952-06-20'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'Retired Banker',
+    bio: 'Senior banker who helped Vietnamese immigrants with loans.',
+  });
+  linkChild(hung, mei, minhH);
+  const lienMinh = await make({
+    firstName: 'Liên', lastName: 'Đỗ', gender: 'female',
+    birthDate: new Date('1954-01-30'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'Retired Accountant',
+    bio: 'Married Minh in 1975. Meticulous with numbers.',
+  });
+  linkSpouses(minhH, lienMinh, 'married');
+
+  // H-4. Phượng Nguyễn
+  const phuong = await make({
+    firstName: 'Phượng', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('1955-04-10'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'Retired Chef',
+    bio: 'Opened the first Vietnamese restaurant in Houston.',
+  });
+  linkChild(hung, mei, phuong);
+  const kevinTr = await make({
+    firstName: 'Kevin', lastName: 'Trần', gender: 'male',
+    birthDate: new Date('1953-09-25'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Retired Restaurant Owner',
+    bio: 'Married Phượng in 1977. Business partners for 40 years.',
+  });
+  linkSpouses(phuong, kevinTr, 'married');
+
+  // H-5. Tuấn Nguyễn
+  const tuanH = await make({
+    firstName: 'Tuấn', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('1958-12-03'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'Civil Engineer',
+    bio: 'Youngest son. Built bridges and roads across Texas.',
+  });
+  linkChild(hung, mei, tuanH);
+  const sarahTuan = await make({
+    firstName: 'Sarah', lastName: 'Miller', gender: 'female',
+    birthDate: new Date('1960-02-14'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Architect',
+    bio: 'Married Tuấn in 1982. Designed many buildings in Austin.',
+  });
+  linkSpouses(tuanH, sarahTuan, 'married');
+
+  await hung.save();
+  await mei.save();
+
+  // ── Hùng's Gen 3: children of the 5 Gen 2 ──
+
+  // Bảo & Thúy → Khoa, Ngọc
+  const khoa = await make({
+    firstName: 'Khoa', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('1972-05-15'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Cardiologist',
+    bio: 'Heart surgeon at Texas Medical Center.',
+  });
+  linkChild(bao, thuyBao, khoa);
+  const amyKhoa = await make({
+    firstName: 'Amy', lastName: 'Reeves', gender: 'female',
+    birthDate: new Date('1974-08-20'), isLiving: true,
+    birthPlace: 'Dallas, TX', occupation: 'Anesthesiologist',
+    bio: 'Married Khoa in 1998.',
+  });
+  linkSpouses(khoa, amyKhoa, 'married');
+
+  const ngoc = await make({
+    firstName: 'Ngọc', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('1975-10-01'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Pediatrician',
+    bio: 'Runs a children\'s clinic.',
+  });
+  linkChild(bao, thuyBao, ngoc);
+  const ryanNgoc = await make({
+    firstName: 'Ryan', lastName: 'Cooper', gender: 'male',
+    birthDate: new Date('1973-03-12'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Pharmacist',
+    bio: 'Married Ngọc in 2000.',
+  });
+  linkSpouses(ngoc, ryanNgoc, 'married');
+
+  await bao.save(); await thuyBao.save();
+
+  // Hạnh & Quang → Thanh, Vy
+  const thanh = await make({
+    firstName: 'Thanh', lastName: 'Trương', gender: 'male',
+    birthDate: new Date('1973-02-18'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'Journalist',
+    bio: 'Award-winning investigative journalist.',
+  });
+  linkChild(quang, hanh, thanh);
+  const lisaThanh = await make({
+    firstName: 'Lisa', lastName: 'Park', gender: 'female',
+    birthDate: new Date('1975-06-10'), isLiving: true,
+    birthPlace: 'Seoul, South Korea', occupation: 'Editor',
+    bio: 'Married Thanh in 1999.',
+  });
+  linkSpouses(thanh, lisaThanh, 'married');
+
+  const vy = await make({
+    firstName: 'Vy', lastName: 'Trương', gender: 'female',
+    birthDate: new Date('1976-09-22'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'University Lecturer',
+    bio: 'Teaches Vietnamese literature at UC Berkeley.',
+  });
+  linkChild(quang, hanh, vy);
+  const danielVy = await make({
+    firstName: 'Daniel', lastName: 'Brennan', gender: 'male',
+    birthDate: new Date('1974-11-05'), isLiving: true,
+    birthPlace: 'San Francisco, CA', occupation: 'Writer',
+    bio: 'Published novelist. Married Vy in 2001.',
+  });
+  linkSpouses(vy, danielVy, 'married');
+
+  await hanh.save(); await quang.save();
+
+  // Minh & Liên → Đạt, Trang
+  const dat = await make({
+    firstName: 'Đạt', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('1978-04-14'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Financial Analyst',
+    bio: 'Works at a major investment bank.',
+  });
+  linkChild(minhH, lienMinh, dat);
+  const emilDat = await make({
+    firstName: 'Emily', lastName: 'Watson', gender: 'female',
+    birthDate: new Date('1980-07-30'), isLiving: true,
+    birthPlace: 'New York, NY', occupation: 'Lawyer',
+    bio: 'Married Đạt in 2004.',
+  });
+  linkSpouses(dat, emilDat, 'married');
+
+  const trang = await make({
+    firstName: 'Trang', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('1980-12-08'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Interior Designer',
+    bio: 'Runs her own design studio.',
+  });
+  linkChild(minhH, lienMinh, trang);
+  const markTrang = await make({
+    firstName: 'Marcus', lastName: 'Johnson', gender: 'male',
+    birthDate: new Date('1978-03-17'), isLiving: true,
+    birthPlace: 'Chicago, IL', occupation: 'Contractor',
+    bio: 'Married Trang in 2005.',
+  });
+  linkSpouses(trang, markTrang, 'married');
+
+  await minhH.save(); await lienMinh.save();
+
+  // Phượng & Kevin → Vinh, Mai
+  const vinh = await make({
+    firstName: 'Vinh', lastName: 'Trần', gender: 'male',
+    birthDate: new Date('1979-06-22'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Software Developer',
+    bio: 'Full-stack developer at a tech startup.',
+  });
+  linkChild(kevinTr, phuong, vinh);
+  const jessVinh = await make({
+    firstName: 'Jessica', lastName: 'Torres', gender: 'female',
+    birthDate: new Date('1981-09-15'), isLiving: true,
+    birthPlace: 'San Antonio, TX', occupation: 'UX Designer',
+    bio: 'Married Vinh in 2006.',
+  });
+  linkSpouses(vinh, jessVinh, 'married');
+
+  const maiPh = await make({
+    firstName: 'Mai', lastName: 'Trần', gender: 'female',
+    birthDate: new Date('1982-01-30'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Dentist',
+    bio: 'Owns a dental practice in Houston.',
+  });
+  linkChild(kevinTr, phuong, maiPh);
+  const scottMai = await make({
+    firstName: 'Scott', lastName: 'Anderson', gender: 'male',
+    birthDate: new Date('1980-05-12'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Orthodontist',
+    bio: 'Married Mai in 2007.',
+  });
+  linkSpouses(maiPh, scottMai, 'married');
+
+  await phuong.save(); await kevinTr.save();
+
+  // Tuấn & Sarah → Derek, Lily
+  const derekT = await make({
+    firstName: 'Derek', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('1984-03-20'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Civil Engineer',
+    bio: 'Follows his father\'s footsteps in engineering.',
+  });
+  linkChild(tuanH, sarahTuan, derekT);
+  const rachelD = await make({
+    firstName: 'Rachel', lastName: 'Kim', gender: 'female',
+    birthDate: new Date('1986-08-10'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Data Scientist',
+    bio: 'Married Derek in 2010.',
+  });
+  linkSpouses(derekT, rachelD, 'married');
+
+  const lilyT = await make({
+    firstName: 'Lily', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('1987-11-15'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Graphic Designer',
+    bio: 'Freelance designer specializing in branding.',
+  });
+  linkChild(tuanH, sarahTuan, lilyT);
+  const mattLily = await make({
+    firstName: 'Matthew', lastName: 'Garcia', gender: 'male',
+    birthDate: new Date('1985-06-22'), isLiving: true,
+    birthPlace: 'San Antonio, TX', occupation: 'Teacher',
+    bio: 'Married Lily in 2012.',
+  });
+  linkSpouses(lilyT, mattLily, 'married');
+
+  await tuanH.save(); await sarahTuan.save();
+
+  // ── Hùng's Gen 4: grandchildren ──
+
+  // Khoa & Amy → Anh, Bình
+  const anhK = await make({
+    firstName: 'Anh', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('2000-02-14'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Medical Student',
+    bio: 'Following her parents into medicine.',
+  });
+  linkChild(khoa, amyKhoa, anhK);
+  const binhK = await make({
+    firstName: 'Bình', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('2003-07-22'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'College Student',
+    bio: 'Studying biomedical engineering.',
+  });
+  linkChild(khoa, amyKhoa, binhK);
+  await khoa.save(); await amyKhoa.save();
+
+  // Ngọc & Ryan → Hải, Cúc
+  const hai = await make({
+    firstName: 'Hải', lastName: 'Cooper', gender: 'male',
+    birthDate: new Date('2002-04-18'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'College Student',
+    bio: 'Pre-med student at Rice University.',
+  });
+  linkChild(ryanNgoc, ngoc, hai);
+  const cuc = await make({
+    firstName: 'Cúc', lastName: 'Cooper', gender: 'female',
+    birthDate: new Date('2005-09-30'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'High School Student',
+    bio: 'Passionate about environmental science.',
+  });
+  linkChild(ryanNgoc, ngoc, cuc);
+  await ngoc.save(); await ryanNgoc.save();
+
+  // Thanh & Lisa → Duy, Hiền
+  const duy = await make({
+    firstName: 'Duy', lastName: 'Trương', gender: 'male',
+    birthDate: new Date('2001-06-10'), isLiving: true,
+    birthPlace: 'San Francisco, CA', occupation: 'College Student',
+    bio: 'Journalism major at Columbia University.',
+  });
+  linkChild(thanh, lisaThanh, duy);
+  const hien = await make({
+    firstName: 'Hiền', lastName: 'Trương', gender: 'female',
+    birthDate: new Date('2004-01-25'), isLiving: true,
+    birthPlace: 'San Francisco, CA', occupation: 'High School Student',
+    bio: 'Award-winning debater.',
+  });
+  linkChild(thanh, lisaThanh, hien);
+  await thanh.save(); await lisaThanh.save();
+
+  // Vy & Daniel → Khanh, Linh
+  const khanhV = await make({
+    firstName: 'Khanh', lastName: 'Brennan', gender: 'female',
+    birthDate: new Date('2003-08-05'), isLiving: true,
+    birthPlace: 'Berkeley, CA', occupation: 'College Student',
+    bio: 'Creative writing major.',
+  });
+  linkChild(danielVy, vy, khanhV);
+  const linhV = await make({
+    firstName: 'Linh', lastName: 'Brennan', gender: 'male',
+    birthDate: new Date('2006-03-15'), isLiving: true,
+    birthPlace: 'Berkeley, CA', occupation: 'High School Student',
+    bio: 'Aspiring filmmaker.',
+  });
+  linkChild(danielVy, vy, linhV);
+  await vy.save(); await danielVy.save();
+
+  // Đạt & Emily → Nam, Châu
+  const namD = await make({
+    firstName: 'Nam', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('2006-10-20'), isLiving: true,
+    birthPlace: 'New York, NY', occupation: 'High School Student',
+    bio: 'Chess champion at his school.',
+  });
+  linkChild(dat, emilDat, namD);
+  const chau = await make({
+    firstName: 'Châu', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('2009-04-14'), isLiving: true,
+    birthPlace: 'New York, NY', occupation: 'Middle School Student',
+    bio: 'Loves painting and piano.',
+  });
+  linkChild(dat, emilDat, chau);
+  await dat.save(); await emilDat.save();
+
+  // Trang & Marcus → Hương, Phúc
+  const huong = await make({
+    firstName: 'Hương', lastName: 'Johnson', gender: 'female',
+    birthDate: new Date('2007-02-28'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'High School Student',
+    bio: 'Star volleyball player.',
+  });
+  linkChild(markTrang, trang, huong);
+  const phucJ = await make({
+    firstName: 'Phúc', lastName: 'Johnson', gender: 'male',
+    birthDate: new Date('2010-08-12'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Middle School Student',
+    bio: 'Loves robotics and coding.',
+  });
+  linkChild(markTrang, trang, phucJ);
+  await trang.save(); await markTrang.save();
+
+  // Vinh & Jessica T → Tâm, Uyên
+  const tam = await make({
+    firstName: 'Tâm', lastName: 'Trần', gender: 'male',
+    birthDate: new Date('2008-05-10'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'High School Student',
+    bio: 'Talented guitarist.',
+  });
+  linkChild(vinh, jessVinh, tam);
+  const uyen = await make({
+    firstName: 'Uyên', lastName: 'Trần', gender: 'female',
+    birthDate: new Date('2011-11-25'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Middle School Student',
+    bio: 'Loves ballet and painting.',
+  });
+  linkChild(vinh, jessVinh, uyen);
+  await vinh.save(); await jessVinh.save();
+
+  // Mai & Scott → Quỳnh, Sơn
+  const quynhM = await make({
+    firstName: 'Quỳnh', lastName: 'Anderson', gender: 'female',
+    birthDate: new Date('2009-07-15'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'High School Student',
+    bio: 'State science fair winner.',
+  });
+  linkChild(scottMai, maiPh, quynhM);
+  const sonM = await make({
+    firstName: 'Sơn', lastName: 'Anderson', gender: 'male',
+    birthDate: new Date('2012-03-22'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Middle School Student',
+    bio: 'Soccer enthusiast.',
+  });
+  linkChild(scottMai, maiPh, sonM);
+  await maiPh.save(); await scottMai.save();
+
+  // Derek & Rachel → Khải, Yến
+  const khai = await make({
+    firstName: 'Khải', lastName: 'Nguyễn', gender: 'male',
+    birthDate: new Date('2012-09-05'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Elementary Student',
+    bio: 'Loves dinosaurs and building LEGOs.',
+  });
+  linkChild(derekT, rachelD, khai);
+  const yenD = await make({
+    firstName: 'Yến', lastName: 'Nguyễn', gender: 'female',
+    birthDate: new Date('2015-01-18'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Elementary Student',
+    bio: 'Loves drawing and animals.',
+  });
+  linkChild(derekT, rachelD, yenD);
+  await derekT.save(); await rachelD.save();
+
+  // Lily & Matthew → Trúc, Quốc
+  const truc = await make({
+    firstName: 'Trúc', lastName: 'Garcia', gender: 'female',
+    birthDate: new Date('2014-06-20'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Elementary Student',
+    bio: 'Creative little artist.',
+  });
+  linkChild(mattLily, lilyT, truc);
+  const quocG = await make({
+    firstName: 'Quốc', lastName: 'Garcia', gender: 'male',
+    birthDate: new Date('2017-04-10'), isLiving: true,
+    birthPlace: 'Austin, TX', occupation: 'Preschool',
+    bio: 'The youngest in this branch.',
+  });
+  linkChild(mattLily, lilyT, quocG);
+  await lilyT.save(); await mattLily.save();
+
+  // ── Hùng's Gen 5: great-grandchildren (for oldest branches) ──
+  // Anh (Khoa's daughter) has a child
+  const anhSpouse = await make({
+    firstName: 'Tyler', lastName: 'Brooks', gender: 'male',
+    birthDate: new Date('1999-11-08'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Resident Doctor',
+    bio: 'Married Anh in 2024.',
+  });
+  linkSpouses(anhK, anhSpouse, 'married');
+  const babyAnh = await make({
+    firstName: 'Nhi', lastName: 'Brooks', gender: 'female',
+    birthDate: new Date('2025-06-01'), isLiving: true,
+    birthPlace: 'Houston, TX', occupation: 'Infant',
+    bio: 'Newest member of the family.',
+  });
+  linkChild(anhSpouse, anhK, babyAnh);
+  await anhK.save(); await anhSpouse.save(); await babyAnh.save();
+  await binhK.save(); await hai.save(); await cuc.save();
+  await duy.save(); await hien.save(); await khanhV.save(); await linhV.save();
+  await namD.save(); await chau.save(); await huong.save(); await phucJ.save();
+  await tam.save(); await uyen.save(); await quynhM.save(); await sonM.save();
+  await khai.save(); await yenD.save(); await truc.save(); await quocG.save();
+
+  // ═══════════════════════════════════════════════════════════
+  //  LAN BRANCH — 5 children, 4 downstream generations
+  // ═══════════════════════════════════════════════════════════
+
+  // ── Lan's Gen 2: 5 children ──
+
+  // L-1. Thắng Lê
+  const thang = await make({
+    firstName: 'Thắng', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('1950-02-14'), isLiving: true,
+    birthPlace: 'Đà Nẵng, Vietnam', occupation: 'Retired Ship Engineer',
+    bio: 'Eldest son. Followed his father into maritime career.',
+  });
+  linkChild(tan, lan, thang);
+  const nganTh = await make({
+    firstName: 'Ngân', lastName: 'Hoàng', gender: 'female',
+    birthDate: new Date('1952-05-20'), isLiving: true,
+    birthPlace: 'Huế, Vietnam', occupation: 'Retired Teacher',
+    bio: 'Married Thắng in 1972.',
+  });
+  linkSpouses(thang, nganTh, 'married');
+
+  // L-2. Hồng Lê
+  const hong = await make({
+    firstName: 'Hồng', lastName: 'Lê', gender: 'female',
+    birthDate: new Date('1952-08-30'), isLiving: true,
+    birthPlace: 'Đà Nẵng, Vietnam', occupation: 'Retired Silk Trader',
+    bio: 'Took over mother Lan\'s silk business.',
+  });
+  linkChild(tan, lan, hong);
+  const robertLe = await make({
+    firstName: 'Robert', lastName: 'Wilson', gender: 'male',
+    birthDate: new Date('1950-10-12'), isLiving: true,
+    birthPlace: 'Portland, OR', occupation: 'Retired Import/Export',
+    bio: 'Married Hồng in 1974. Helped expand the silk business internationally.',
+  });
+  linkSpouses(hong, robertLe, 'married');
+
+  // L-3. Cường Lê
+  const cuong = await make({
+    firstName: 'Cường', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('1955-04-17'), isLiving: true,
+    birthPlace: 'Đà Nẵng, Vietnam', occupation: 'Retired Navy Officer',
+    bio: 'Served in the navy for 25 years.',
+  });
+  linkChild(tan, lan, cuong);
+  const maryC = await make({
+    firstName: 'Mary', lastName: 'O\'Brien', gender: 'female',
+    birthDate: new Date('1957-12-08'), isLiving: true,
+    birthPlace: 'Boston, MA', occupation: 'Retired Naval Nurse',
+    bio: 'Met Cường at a naval base. Married in 1978.',
+  });
+  linkSpouses(cuong, maryC, 'married');
+
+  // L-4. Yến Lê
+  const yenLe = await make({
+    firstName: 'Yến', lastName: 'Lê', gender: 'female',
+    birthDate: new Date('1958-07-22'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'Retired Florist',
+    bio: 'Owned the most popular flower shop in Orange County.',
+  });
+  linkChild(tan, lan, yenLe);
+  const tomYen = await make({
+    firstName: 'Thomas', lastName: 'Chang', gender: 'male',
+    birthDate: new Date('1956-03-15'), isLiving: true,
+    birthPlace: 'Taipei, Taiwan', occupation: 'Retired Landscape Architect',
+    bio: 'Married Yến in 1980. Together they designed beautiful gardens.',
+  });
+  linkSpouses(yenLe, tomYen, 'married');
+
+  // L-5. Dũng Lê
+  const dung = await make({
+    firstName: 'Dũng', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('1961-11-05'), isLiving: true,
+    birthPlace: 'Saigon, Vietnam', occupation: 'Real Estate Developer',
+    bio: 'Youngest child. Built a real estate empire in Southern California.',
+  });
+  linkChild(tan, lan, dung);
+  const lindaDung = await make({
+    firstName: 'Linda', lastName: 'Nakamura', gender: 'female',
+    birthDate: new Date('1963-09-18'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Interior Architect',
+    bio: 'Married Dũng in 1985.',
+  });
+  linkSpouses(dung, lindaDung, 'married');
+
+  await lan.save();
+  await tan.save();
+
+  // ── Lan's Gen 3: children of the 5 Gen 2 ──
+
+  // Thắng & Ngân → Đông, Xuân
+  const dong = await make({
+    firstName: 'Đông', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('1974-01-15'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Marine Biologist',
+    bio: 'Studies coral reef ecosystems.',
+  });
+  linkChild(thang, nganTh, dong);
+  const karenDong = await make({
+    firstName: 'Karen', lastName: 'Foster', gender: 'female',
+    birthDate: new Date('1976-04-20'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Oceanographer',
+    bio: 'Married Đông in 2000.',
+  });
+  linkSpouses(dong, karenDong, 'married');
+
+  const xuan = await make({
+    firstName: 'Xuân', lastName: 'Lê', gender: 'female',
+    birthDate: new Date('1977-06-10'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Veterinarian',
+    bio: 'Runs an animal rescue shelter.',
+  });
+  linkChild(thang, nganTh, xuan);
+  const jasonXuan = await make({
+    firstName: 'Jason', lastName: 'Rivera', gender: 'male',
+    birthDate: new Date('1975-09-30'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Firefighter',
+    bio: 'Married Xuân in 2002.',
+  });
+  linkSpouses(xuan, jasonXuan, 'married');
+
+  await thang.save(); await nganTh.save();
+
+  // Hồng & Robert W → Hà, Dương
+  const haLe = await make({
+    firstName: 'Hà', lastName: 'Wilson', gender: 'female',
+    birthDate: new Date('1976-03-25'), isLiving: true,
+    birthPlace: 'Portland, OR', occupation: 'Fashion Designer',
+    bio: 'Combines Vietnamese silk traditions with modern fashion.',
+  });
+  linkChild(robertLe, hong, haLe);
+  const jamesDuong = await make({
+    firstName: 'James', lastName: 'Reed', gender: 'male',
+    birthDate: new Date('1974-07-12'), isLiving: true,
+    birthPlace: 'Portland, OR', occupation: 'Photographer',
+    bio: 'Fashion photographer. Married Hà in 2001.',
+  });
+  linkSpouses(haLe, jamesDuong, 'married');
+
+  const duong = await make({
+    firstName: 'Dương', lastName: 'Wilson', gender: 'male',
+    birthDate: new Date('1979-11-08'), isLiving: true,
+    birthPlace: 'Portland, OR', occupation: 'Web Developer',
+    bio: 'Full-stack developer at a tech company.',
+  });
+  linkChild(robertLe, hong, duong);
+  const sarahDuong = await make({
+    firstName: 'Sarah', lastName: 'Walsh', gender: 'female',
+    birthDate: new Date('1981-02-14'), isLiving: true,
+    birthPlace: 'Seattle, WA', occupation: 'Product Manager',
+    bio: 'Married Dương in 2005.',
+  });
+  linkSpouses(duong, sarahDuong, 'married');
+
+  await hong.save(); await robertLe.save();
+
+  // Cường & Mary → Long, Thu
+  const longC = await make({
+    firstName: 'Long', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('1980-05-20'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Navy Pilot',
+    bio: 'Third generation in the navy.',
+  });
+  linkChild(cuong, maryC, longC);
+  const emilyLong = await make({
+    firstName: 'Emily', lastName: 'Harris', gender: 'female',
+    birthDate: new Date('1982-08-15'), isLiving: true,
+    birthPlace: 'Virginia Beach, VA', occupation: 'Military Nurse',
+    bio: 'Married Long in 2006.',
+  });
+  linkSpouses(longC, emilyLong, 'married');
+
+  const thu = await make({
+    firstName: 'Thu', lastName: 'Lê', gender: 'female',
+    birthDate: new Date('1983-10-12'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Physical Therapist',
+    bio: 'Helps veterans recover from injuries.',
+  });
+  linkChild(cuong, maryC, thu);
+  const brianThu = await make({
+    firstName: 'Brian', lastName: 'Mitchell', gender: 'male',
+    birthDate: new Date('1981-01-30'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'High School Coach',
+    bio: 'Married Thu in 2008.',
+  });
+  linkSpouses(thu, brianThu, 'married');
+
+  await cuong.save(); await maryC.save();
+
+  // Yến & Thomas C → Trâm, Quân
+  const tram = await make({
+    firstName: 'Trâm', lastName: 'Chang', gender: 'female',
+    birthDate: new Date('1982-02-28'), isLiving: true,
+    birthPlace: 'Irvine, CA', occupation: 'Botanist',
+    bio: 'Researches rare orchid species.',
+  });
+  linkChild(tomYen, yenLe, tram);
+  const alexTram = await make({
+    firstName: 'Alex', lastName: 'Thornton', gender: 'male',
+    birthDate: new Date('1980-06-18'), isLiving: true,
+    birthPlace: 'Irvine, CA', occupation: 'Horticulturist',
+    bio: 'Married Trâm in 2007.',
+  });
+  linkSpouses(tram, alexTram, 'married');
+
+  const quan = await make({
+    firstName: 'Quân', lastName: 'Chang', gender: 'male',
+    birthDate: new Date('1985-09-10'), isLiving: true,
+    birthPlace: 'Irvine, CA', occupation: 'Landscape Designer',
+    bio: 'Designs Japanese-inspired gardens.',
+  });
+  linkChild(tomYen, yenLe, quan);
+  const meganQuan = await make({
+    firstName: 'Megan', lastName: 'Campbell', gender: 'female',
+    birthDate: new Date('1987-03-05'), isLiving: true,
+    birthPlace: 'San Jose, CA', occupation: 'Art Teacher',
+    bio: 'Married Quân in 2010.',
+  });
+  linkSpouses(quan, meganQuan, 'married');
+
+  await yenLe.save(); await tomYen.save();
+
+  // Dũng & Linda N → Huy, Thảo
+  const huy = await make({
+    firstName: 'Huy', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('1987-04-14'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Real Estate Agent',
+    bio: 'Continues the family real estate business.',
+  });
+  linkChild(dung, lindaDung, huy);
+  const jenHuy = await make({
+    firstName: 'Jennifer', lastName: 'Ortiz', gender: 'female',
+    birthDate: new Date('1989-07-22'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Marketing Manager',
+    bio: 'Married Huy in 2013.',
+  });
+  linkSpouses(huy, jenHuy, 'married');
+
+  const thao = await make({
+    firstName: 'Thảo', lastName: 'Lê', gender: 'female',
+    birthDate: new Date('1990-12-01'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Architect',
+    bio: 'Designs eco-friendly homes.',
+  });
+  linkChild(dung, lindaDung, thao);
+  const adamThao = await make({
+    firstName: 'Adam', lastName: 'Patel', gender: 'male',
+    birthDate: new Date('1988-10-15'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Structural Engineer',
+    bio: 'Married Thảo in 2015.',
+  });
+  linkSpouses(thao, adamThao, 'married');
+
+  await dung.save(); await lindaDung.save();
+
+  // ── Lan's Gen 4: grandchildren ──
+
+  // Đông & Karen → Sóng, Biển
+  const song = await make({
+    firstName: 'Sóng', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('2002-07-04'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'College Student',
+    bio: 'Marine biology major, like his father.',
+  });
+  linkChild(dong, karenDong, song);
+  const bien = await make({
+    firstName: 'Biển', lastName: 'Lê', gender: 'female',
+    birthDate: new Date('2005-03-18'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'High School Student',
+    bio: 'Competitive swimmer.',
+  });
+  linkChild(dong, karenDong, bien);
+  await dong.save(); await karenDong.save();
+
+  // Xuân & Jason → Hoa, Lộc
+  const hoaX = await make({
+    firstName: 'Hoa', lastName: 'Rivera', gender: 'female',
+    birthDate: new Date('2004-05-22'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'High School Student',
+    bio: 'Loves horses and horseback riding.',
+  });
+  linkChild(jasonXuan, xuan, hoaX);
+  const loc = await make({
+    firstName: 'Lộc', lastName: 'Rivera', gender: 'male',
+    birthDate: new Date('2007-11-10'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Middle School Student',
+    bio: 'Aspiring marine biologist.',
+  });
+  linkChild(jasonXuan, xuan, loc);
+  await xuan.save(); await jasonXuan.save();
+
+  // Hà & James R → Thương, Nguyệt
+  const thuong = await make({
+    firstName: 'Thương', lastName: 'Reed', gender: 'female',
+    birthDate: new Date('2003-08-15'), isLiving: true,
+    birthPlace: 'Portland, OR', occupation: 'College Student',
+    bio: 'Studying fashion design at Parsons.',
+  });
+  linkChild(jamesDuong, haLe, thuong);
+  const nguyet = await make({
+    firstName: 'Nguyệt', lastName: 'Reed', gender: 'female',
+    birthDate: new Date('2006-12-20'), isLiving: true,
+    birthPlace: 'Portland, OR', occupation: 'High School Student',
+    bio: 'Passionate about photography like her father.',
+  });
+  linkChild(jamesDuong, haLe, nguyet);
+  await haLe.save(); await jamesDuong.save();
+
+  // Dương & Sarah W → Phong, Vân
+  const phong = await make({
+    firstName: 'Phong', lastName: 'Wilson', gender: 'male',
+    birthDate: new Date('2007-04-10'), isLiving: true,
+    birthPlace: 'Seattle, WA', occupation: 'High School Student',
+    bio: 'Coding prodigy, already building apps.',
+  });
+  linkChild(duong, sarahDuong, phong);
+  const van = await make({
+    firstName: 'Vân', lastName: 'Wilson', gender: 'female',
+    birthDate: new Date('2010-09-25'), isLiving: true,
+    birthPlace: 'Seattle, WA', occupation: 'Middle School Student',
+    bio: 'Loves reading and creative writing.',
+  });
+  linkChild(duong, sarahDuong, van);
+  await duong.save(); await sarahDuong.save();
+
+  // Long & Emily → Đức (named after great-great-grandfather), Thùy
+  const ducL = await make({
+    firstName: 'Đức', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('2008-01-20'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'High School Student',
+    bio: 'Named after the family patriarch. Loves history.',
+  });
+  linkChild(longC, emilyLong, ducL);
+  const thuyL = await make({
+    firstName: 'Thùy', lastName: 'Lê', gender: 'female',
+    birthDate: new Date('2011-06-15'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Middle School Student',
+    bio: 'Aspiring dancer.',
+  });
+  linkChild(longC, emilyLong, thuyL);
+  await longC.save(); await emilyLong.save();
+
+  // Thu & Brian → Bảo (named after cousin), An
+  const baoThu = await make({
+    firstName: 'Bảo', lastName: 'Mitchell', gender: 'male',
+    birthDate: new Date('2010-03-08'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Middle School Student',
+    bio: 'Star basketball player.',
+  });
+  linkChild(brianThu, thu, baoThu);
+  const anThu = await make({
+    firstName: 'An', lastName: 'Mitchell', gender: 'female',
+    birthDate: new Date('2013-10-22'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Elementary Student',
+    bio: 'Loves music and singing.',
+  });
+  linkChild(brianThu, thu, anThu);
+  await thu.save(); await brianThu.save();
+
+  // Trâm & Alex → Lan (named after grandmother), Sen
+  const lanTr = await make({
+    firstName: 'Lan', lastName: 'Thornton', gender: 'female',
+    birthDate: new Date('2009-05-05'), isLiving: true,
+    birthPlace: 'Irvine, CA', occupation: 'High School Student',
+    bio: 'Named after her great-grandmother. Loves botany.',
+  });
+  linkChild(alexTram, tram, lanTr);
+  const sen = await make({
+    firstName: 'Sen', lastName: 'Thornton', gender: 'male',
+    birthDate: new Date('2012-08-18'), isLiving: true,
+    birthPlace: 'Irvine, CA', occupation: 'Middle School Student',
+    bio: 'Loves gardening and insects.',
+  });
+  linkChild(alexTram, tram, sen);
+  await tram.save(); await alexTram.save();
+
+  // Quân & Megan → Cầm, Kỳ
+  const cam = await make({
+    firstName: 'Cầm', lastName: 'Chang', gender: 'female',
+    birthDate: new Date('2012-11-30'), isLiving: true,
+    birthPlace: 'San Jose, CA', occupation: 'Elementary Student',
+    bio: 'Named after the Vietnamese word for music.',
+  });
+  linkChild(quan, meganQuan, cam);
+  const kyQ = await make({
+    firstName: 'Kỳ', lastName: 'Chang', gender: 'male',
+    birthDate: new Date('2015-07-14'), isLiving: true,
+    birthPlace: 'San Jose, CA', occupation: 'Elementary Student',
+    bio: 'Loves building things.',
+  });
+  linkChild(quan, meganQuan, kyQ);
+  await quan.save(); await meganQuan.save();
+
+  // Huy & Jennifer O → Minh, Thịnh
+  const minhHuy = await make({
+    firstName: 'Minh', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('2015-02-20'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Elementary Student',
+    bio: 'Already shows interest in architecture.',
+  });
+  linkChild(huy, jenHuy, minhHuy);
+  const thinh = await make({
+    firstName: 'Thịnh', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('2018-06-10'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Preschool',
+    bio: 'The family comedian.',
+  });
+  linkChild(huy, jenHuy, thinh);
+  await huy.save(); await jenHuy.save();
+
+  // Thảo & Adam → Trâm, Bách
+  const tramThao = await make({
+    firstName: 'Trâm', lastName: 'Patel', gender: 'female',
+    birthDate: new Date('2017-04-25'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Preschool',
+    bio: 'Loves building with blocks.',
+  });
+  linkChild(adamThao, thao, tramThao);
+  const bach = await make({
+    firstName: 'Bách', lastName: 'Patel', gender: 'male',
+    birthDate: new Date('2020-01-15'), isLiving: true,
+    birthPlace: 'Los Angeles, CA', occupation: 'Toddler',
+    bio: 'The youngest member of the Lan branch.',
+  });
+  linkChild(adamThao, thao, bach);
+  await thao.save(); await adamThao.save();
+
+  // ── Lan's Gen 5: great-grandchild for oldest branch ──
+  const songSpouse = await make({
+    firstName: 'Mia', lastName: 'Santos', gender: 'female',
+    birthDate: new Date('2003-10-12'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Marine Researcher',
+    bio: 'Married Sóng in 2025.',
+  });
+  linkSpouses(song, songSpouse, 'married');
+  const babySong = await make({
+    firstName: 'Đại Dương', lastName: 'Lê', gender: 'male',
+    birthDate: new Date('2026-01-10'), isLiving: true,
+    birthPlace: 'San Diego, CA', occupation: 'Infant',
+    bio: 'Name means "ocean" — newest member of the Lan branch.',
+  });
+  linkChild(song, songSpouse, babySong);
+  await song.save(); await songSpouse.save(); await babySong.save();
+  await bien.save(); await hoaX.save(); await loc.save();
+  await thuong.save(); await nguyet.save(); await phong.save(); await van.save();
+  await ducL.save(); await thuyL.save(); await baoThu.save(); await anThu.save();
+  await lanTr.save(); await sen.save(); await cam.save(); await kyQ.save();
+  await minhHuy.save(); await thinh.save(); await tramThao.save(); await bach.save();
   // ═══════════════════════════════════════════════════════════
   //  GEN 2 — 10 Children of James & Mary
   //  (Robert & Susan are original; 8 new siblings added)
@@ -1922,7 +2909,7 @@ async function seed() {
   await sora.save();
 
   // ── Set root & save tree ──────────────────────────────────
-  tree.rootMember = james._id;
+  tree.rootMember = duc._id;
   await tree.save();
 
   demoUser.familyTrees.push(tree._id);
@@ -1931,44 +2918,33 @@ async function seed() {
   // ── Summary ───────────────────────────────────────────────
   const total = await FamilyMember.countDocuments({ familyTree: tree._id });
 
-  console.log('\n  Demo family tree seeded successfully!');
+  console.log('\n  ✅ Gia phả đã tạo thành công!');
   console.log('================================================================');
-  console.log(`  Tree:     ${tree.name}`);
-  console.log(`  Members:  ${total}`);
+  console.log(`  Tên:        ${tree.name}`);
+  console.log(`  Thành viên: ${total}`);
   console.log('');
-  console.log('  ── JAMES & MARY\'S 10 CHILDREN ─────────────────────────');
+  console.log('  ── GEN 0 — Cụ Đức & Cụ Thị ──────────────────────────');
+  console.log('  Đức Nguyễn [1895-1970] --- Thị Trần [1898-1975]');
+  console.log('  3 con: James, Hùng, Lan');
+  console.log('');
+  console.log('  ── NHÁNH 1: JAMES & MARY (10 con) ────────────────────');
   console.log('  Gen 1  James [deceased] --- Mary [deceased]');
-  console.log('  Gen 2  (10 children):');
-  console.log('    1. Thomas --- Margaret O\'Brien');
-  console.log('    2. Robert [deceased] --[widowed]-- Elizabeth → remarried George');
-  console.log('    3. Catherine --- Henry Lam');
-  console.log('    4. Susan --[divorced]-- Richard → Susan remarried Frank, Richard remarried Linda');
-  console.log('    5. Joseph --- Anna Pham');
-  console.log('    6. Rose --- Paul Yamamoto');
-  console.log('    7. Peter --- Grace Liu');
-  console.log('    8. Teresa --- Andrew Chu');
-  console.log('    9. Patrick --- Diana Santos');
-  console.log('   10. Christina --- Brian O\'Malley');
+  console.log('    Thomas, Robert†, Catherine, Susan, Joseph,');
+  console.log('    Rose, Peter, Teresa, Patrick, Christina');
+  console.log('  + 8 nhánh con mở rộng + Park Side (Elizabeth)');
   console.log('');
-  console.log('  ── 8 NEW FAMILY BRANCHES ──────────────────────────────');
-  console.log('  Branch 1 (Thomas): Philip→Justin→Owen | Diane→Brandon→Harper');
-  console.log('  Branch 2 (Catherine): Steven→Tiffany→Leo | Michelle→Carlos→Maya');
-  console.log('  Branch 3 (Joseph): Christopher→Alex→Chloe | Stephanie→Jordan,Taylor');
-  console.log('  Branch 4 (Rose): Kenneth→Hannah→Aria | Samantha→Ravi→Nia');
-  console.log('  Branch 5 (Peter): Raymond→Tyler,Madison | Christine→Zara→Nadia');
-  console.log('  Branch 6 (Teresa): Derek→Jasmine,Dylan | Monica→Hailey,Lucas');
-  console.log('  Branch 7 (Patrick): Gabriel→Mateo,Sofia | Valentina→Liam,Ella');
-  console.log('  Branch 8 (Christina): Sean→Kai,Luna | Sienna→Declan,Ivy');
+  console.log('  ── NHÁNH 2: HÙNG & MEI (5 con) ──────────────────────');
+  console.log('  Gen 1  Hùng Nguyễn [1922-2001] --- Mei Wong [1925-2008]');
+  console.log('    Bảo, Hạnh, Minh, Phượng, Tuấn');
+  console.log('  + 10 cháu + 20 chắt + 1 chút');
   console.log('');
-  console.log('  ── ORIGINAL BRANCHES (Robert & Susan) ─────────────────');
-  console.log('  Robert branch: William→Michael→Ethan,Olivia | David→Daniel→Sophia,Lucas | Helen | Lily');
-  console.log('  Susan branch:  Amy→Jake | Nathan | Jessica→Mia');
-  console.log('');
-  console.log('  ── PARK SIDE (Elizabeth\'s family) ─────────────────────');
-  console.log('  Joon-ho → Sang-hoon → Elizabeth, Jun-seo → Yuna→Sora, Min-ho');
+  console.log('  ── NHÁNH 3: LAN & TẤN (5 con) ───────────────────────');
+  console.log('  Gen 1  Lan Nguyễn [1926-2010] --- Tấn Lê [1924-2003]');
+  console.log('    Thắng, Hồng, Cường, Yến, Dũng');
+  console.log('  + 10 cháu + 20 chắt + 1 chút');
   console.log('================================================================');
   console.log('  Demo User ID:', demoUser._id.toString());
-  console.log('\n  Open http://localhost:3000 -> "Try Demo" to explore!\n');
+  console.log('\n  Mở http://localhost:3000 -> "Xem Gia Phả" để khám phá!\n');
 
   await mongoose.disconnect();
 }
