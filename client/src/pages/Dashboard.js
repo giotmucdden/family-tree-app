@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTrees, createTree, deleteTree } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 function Dashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [trees, setTrees] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -67,21 +69,21 @@ function Dashboard() {
     <div className="dashboard">
       <div className="dashboard-header">
         <div>
-          <h1>Xin chào, {user?.firstName || user?.displayName}!</h1>
-          <p>Quản lý cây gia phả của bạn bên dưới</p>
+          <h1>{t('dash_title')}</h1>
+          <p>Xin chào, {user?.firstName || user?.displayName}!</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          + Tạo Gia Phả Mới
+          + {t('dash_create')}
         </button>
       </div>
 
       {showCreate && (
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Tạo Gia Phả Mới</h2>
+            <h2>{t('dash_create')}</h2>
             <form onSubmit={handleCreate}>
               <div className="form-group">
-                <label>Tên Gia Phả</label>
+                <label>{t('dash_new_tree_name')}</label>
                 <input
                   type="text"
                   placeholder="Ví dụ: Gia Đình Nguyễn"
@@ -104,10 +106,10 @@ function Dashboard() {
                   className="btn btn-outline"
                   onClick={() => setShowCreate(false)}
                 >
-                  Hủy
+                  {t('dash_cancel')}
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Tạo Gia Phả
+                  {t('dash_create_btn')}
                 </button>
               </div>
             </form>
@@ -118,13 +120,13 @@ function Dashboard() {
       {trees.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon">🌱</span>
-          <h2>Chưa có gia phả nào</h2>
+          <h2>{t('dash_no_trees')}</h2>
           <p>Tạo gia phả đầu tiên để bắt đầu!</p>
           <button
             className="btn btn-primary"
             onClick={() => setShowCreate(true)}
           >
-            Tạo Gia Phả Đầu Tiên
+            {t('dash_create')}
           </button>
         </div>
       ) : (
@@ -139,20 +141,31 @@ function Dashboard() {
               <h3>{tree.name}</h3>
               {tree.description && <p>{tree.description}</p>}
               <div className="tree-card-meta">
-                <span>{tree.members?.length || 0} thành viên</span>
+                <span>{tree.members?.length || 0} {t('dash_members')}</span>
                 <span>
                   {new Date(tree.createdAt).toLocaleDateString('vi-VN')}
                 </span>
               </div>
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(tree._id);
-                }}
-              >
-                Xóa
-              </button>
+              <div className="tree-card-actions">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/tree/${tree._id}`);
+                  }}
+                >
+                  {t('dash_view')}
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(tree._id);
+                  }}
+                >
+                  {t('dash_delete')}
+                </button>
+              </div>
             </div>
           ))}
         </div>

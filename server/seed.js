@@ -43,7 +43,7 @@ async function seed() {
     displayName: 'Demo User',
     firstName: 'Demo',
     lastName: 'User',
-    email: 'demo@familytree.app',
+    email: 'demo@giapha.vn',
     profilePhoto: '',
   });
 

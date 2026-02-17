@@ -6,6 +6,7 @@ import {
   Navigate,
 } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
@@ -61,11 +62,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

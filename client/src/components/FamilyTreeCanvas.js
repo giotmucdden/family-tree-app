@@ -2,8 +2,10 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import * as d3 from 'd3';
 import { updateMemberPosition } from '../api';
 
-const SECTION_W = 150;
-const CARD_H = 62;
+const SECTION_W = 180;
+const CARD_H = 72;
+const PHOTO_W = 60;   // 1/3 of card width for profile picture
+const INFO_W = 120;   // 2/3 of card width for text info
 const V_GAP = 50;
 const H_GAP = 14;
 const COUPLE_GAP = 0;
@@ -29,6 +31,8 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
   const [viewRootId, setViewRootId] = useState(null);
   const [viewMode, setViewMode] = useState(VIEWS.TREE);
   const [d3Layout, setD3Layout] = useState(D3_LAYOUTS.TIDY);
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
+  const childLinkElemsRef = useRef({});
 
   onSelectMemberRef.current = onSelectMember;
   onAddChildRef.current = onAddChild;
@@ -1717,7 +1721,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       });
     }
 
-    // ── Upstream highlight ───────────────────────────────
+    // ── Upstream & Downstream highlight ───────────────────────────────
     let highlightedLinks = [];
 
     function clearHighlight() {
@@ -1726,12 +1730,33 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           .attr('stroke', el.origColor)
           .attr('stroke-width', el.origWidth)
           .attr('opacity', el.origOpacity)
-          .classed('link-highlighted', false);
+          .classed('link-highlighted', false)
+          .classed('link-parent', false)
+          .classed('link-child', false);
       });
       highlightedLinks = [];
       g.selectAll('.child-link:not(.link-highlighted)')
         .attr('opacity', function () { return d3.select(this).attr('data-orig-opacity') || 0.8; });
       g.selectAll('.tree-node').classed('node-dimmed', false);
+    }
+
+    // Get all descendant IDs (children, grandchildren, etc.)
+    function getDescendantIds(memberId) {
+      const descendantIds = new Set();
+      const queue = [memberId];
+      while (queue.length) {
+        const mid = queue.shift();
+        const m = lookup[mid];
+        if (!m) continue;
+        const children = (m.childrenIds || []).map(c => rid(c)).filter(Boolean);
+        children.forEach(cid => {
+          if (!descendantIds.has(cid)) {
+            descendantIds.add(cid);
+            queue.push(cid);
+          }
+        });
+      }
+      return descendantIds;
     }
 
     function highlightUpstream(memberId) {
@@ -1769,6 +1794,21 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         }
       });
 
+      // Also highlight downstream/children links in green
+      const directChildIds = new Set((lookup[memberId]?.childrenIds || []).map(c => typeof c === "object" ? c._id : c).filter(Boolean));
+      Object.entries(childLinkElems).forEach(([key, ce]) => {
+        if (!ce || !ce.path) return;
+        const childId = key; // key is the child member ID
+        if (directChildIds.has(childId)) {
+          let origColor = ce.path.attr("data-orig-color") || ce.path.attr("stroke");
+          let origWidth = ce.path.attr("data-orig-width") || ce.path.attr("stroke-width");
+          let origOpacity = ce.path.attr("data-orig-opacity") || ce.path.attr("opacity");
+          ce.path.attr("stroke", "#43a047").attr("stroke-width", 3).attr("opacity", 1).classed("link-highlighted", true).classed("link-child", true).raise();
+          highlightedLinks.push({ path: ce.path, origColor, origWidth, origOpacity });
+        }
+      });
+
+
       g.selectAll('.child-link:not(.link-highlighted)')
         .each(function () {
           const el = d3.select(this);
@@ -1779,7 +1819,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       g.selectAll('.tree-node').classed('node-dimmed', true);
       g.selectAll('.tree-node').each(function (d) {
         const nodeIds = d?.members ? d.members.map((m) => m.id) : d?.data ? [d.data._id] : [];
-        if (nodeIds.some((id) => ancestorIds.has(id))) {
+        if (nodeIds.some((id) => ancestorIds.has(id) || directChildIds.has(id) || id === memberId)) {
           d3.select(this).classed('node-dimmed', false);
         }
       });
@@ -1895,37 +1935,92 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           }
         }
 
-        // Person icon
-        node.append('text')
-          .attr('x', cardX + 14).attr('y', cardY + CARD_H / 2 + 1)
-          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-          .attr('font-size', '16px')
-          .text(!p.isLiving ? '🪦' : p.gender === 'male' ? '👨' : p.gender === 'female' ? '👩' : '🧑');
+        // Left 1/3: Profile picture area (PHOTO_W = 60px)
+        const photoSize = 50;
+        const photoX = cardX + (PHOTO_W - photoSize) / 2;
+        const photoY = cardY + (CARD_H - photoSize) / 2;
+        const clipId = `clip-group-${d.id}-${i}`;
 
-        // Name
+        // Define clip path for rounded square
+        const defs = node.append('defs');
+        defs.append('clipPath')
+          .attr('id', clipId)
+          .append('rect')
+          .attr('x', photoX).attr('y', photoY)
+          .attr('width', photoSize).attr('height', photoSize)
+          .attr('rx', 8).attr('ry', 8);
+
+        // Photo background rounded square
+        node.append('rect')
+          .attr('x', photoX).attr('y', photoY)
+          .attr('width', photoSize).attr('height', photoSize)
+          .attr('rx', 8).attr('ry', 8)
+          .attr('fill', '#f5f5f5')
+          .attr('stroke', '#e0e0e0').attr('stroke-width', 1);
+
+        // Display photo if available, otherwise show emoji
+        if (p.photo) {
+          node.append('image')
+            .attr('x', photoX).attr('y', photoY)
+            .attr('width', photoSize).attr('height', photoSize)
+            .attr('href', p.photo)
+            .attr('clip-path', `url(#${clipId})`)
+            .attr('preserveAspectRatio', 'xMidYMid slice');
+        } else {
+          node.append('text')
+            .attr('x', cardX + PHOTO_W / 2).attr('y', cardY + CARD_H / 2 + 2)
+            .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+            .attr('font-size', '28px')
+            .text(!p.isLiving ? '🪦' : p.gender === 'male' ? '👨' : p.gender === 'female' ? '👩' : '🧑');
+        }
+
+        // Right 2/3: Info area (INFO_W = 120px)
+        const infoX = cardX + PHOTO_W + 4;
+
+        // Line 1: Bold Saint Name
         node.append('text')
-          .attr('x', cardX + 30).attr('y', cardY + 24)
+          .attr('x', infoX).attr('y', cardY + 18)
+          .attr('font-size', '10px').attr('font-weight', '700')
+          .attr('fill', '#5c6bc0')
+          .text(() => {
+            const saint = p.saintName || '';
+            return saint.length > 14 ? saint.substring(0, 14) + '…' : saint;
+          });
+
+        // Line 2: Full Name (lastName middleName firstName - first name always full)
+        node.append('text')
+          .attr('x', infoX).attr('y', cardY + 34)
           .attr('font-size', '11px').attr('font-weight', '600')
           .attr('fill', p.isLiving ? '#212121' : '#78909c')
           .text(() => {
-            const n = `${p.firstName} ${p.lastName}`;
-            return n.length > 14 ? n.substring(0, 14) + '…' : n;
+            const last = p.lastName || '';
+            const middle = p.middleName || '';
+            const first = p.firstName || '';
+            const fullName = `${last} ${middle} ${first}`.trim();
+            if (fullName.length <= 14) return fullName;
+            // Keep first name full, truncate middle first
+            const noMiddle = `${last} ${first}`.trim();
+            if (noMiddle.length <= 14) return noMiddle;
+            // Still too long, truncate last name
+            const maxLast = 14 - first.length - 1;
+            if (maxLast >= 2) {
+              return `${last.substring(0, maxLast)}… ${first}`;
+            }
+            return first;
           });
 
-        // Dates
+        // Line 3: Date of Birth
         node.append('text')
-          .attr('x', cardX + 30).attr('y', cardY + 42)
+          .attr('x', infoX).attr('y', cardY + 50)
           .attr('font-size', '9px').attr('fill', '#757575')
           .text(() => {
-            const b = p.birthDate ? new Date(p.birthDate).getFullYear() : '';
-            if (!p.isLiving && p.deathDate) return `${b} – ${new Date(p.deathDate).getFullYear()}`;
-            return b ? `b. ${b}` : '';
+            if (!p.birthDate) return '';
+            const d = new Date(p.birthDate);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
           });
-
-        // Status dot
-        node.append('circle')
-          .attr('cx', cardX + SECTION_W - 14).attr('cy', cardY + 12).attr('r', 3.5)
-          .attr('fill', p.isLiving ? '#4caf50' : '#90a4ae');
 
         // Explore icon for members with hidden ancestors
         if (hasHiddenAncestor.has(mem.id)) {
@@ -1962,27 +2057,6 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       }
     });
 
-    // ── Group card drag ──────────────────────────────────
-    groupNodes.call(d3.drag()
-      .on('start', function () { d3.select(this).raise(); })
-      .on('drag', function (e, d) {
-        d3.select(this).attr('transform', `translate(${e.x}, ${e.y})`);
-        // Update allPos for each member relative to new group center
-        d.members.forEach((mem) => {
-          const offsetX = mem.x - d.centerX;
-          const offsetY = mem.y - d.centerY;
-          allPos[mem.id] = { x: e.x + offsetX, y: e.y + offsetY };
-        });
-        d.members.forEach((mem) => updateLinksForMember(mem.id));
-      })
-      .on('end', (e, d) => {
-        d.members.forEach((mem) => {
-          const offsetX = mem.x - d.centerX;
-          const offsetY = mem.y - d.centerY;
-          updateMemberPosition(treeId, mem.id, { x: e.x + offsetX, y: e.y + offsetY }).catch(console.error);
-        });
-      })
-    );
 
     // ══════════════════════════════════════════════════════
     // 9. DRAW SINGLE CARDS
@@ -2022,37 +2096,91 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       .attr('text-anchor', 'middle').attr('font-size', '13px')
       .text('👑');
 
-    nodes.append('text')
-      .attr('x', 14).attr('y', CARD_H / 2 + 1)
+    // Left 1/3: Photo area - rounded square
+    const photoSize = 50;
+    const photoX = (PHOTO_W - photoSize) / 2;
+    const photoY = (CARD_H - photoSize) / 2;
+
+    // Define clip paths for each node
+    nodes.each(function(d) {
+      const clipId = `clip-single-${d.data._id}`;
+      d3.select(this).append('defs')
+        .append('clipPath')
+        .attr('id', clipId)
+        .append('rect')
+        .attr('x', photoX).attr('y', photoY)
+        .attr('width', photoSize).attr('height', photoSize)
+        .attr('rx', 8).attr('ry', 8);
+    });
+
+    // Photo background rounded square
+    nodes.append('rect')
+      .attr('x', photoX).attr('y', photoY)
+      .attr('width', photoSize).attr('height', photoSize)
+      .attr('rx', 8).attr('ry', 8)
+      .attr('fill', '#f5f5f5')
+      .attr('stroke', '#e0e0e0').attr('stroke-width', 1);
+
+    // Display photo if available
+    nodes.filter((d) => d.data.photo)
+      .append('image')
+      .attr('x', photoX).attr('y', photoY)
+      .attr('width', photoSize).attr('height', photoSize)
+      .attr('href', (d) => d.data.photo)
+      .attr('clip-path', (d) => `url(#clip-single-${d.data._id})`)
+      .attr('preserveAspectRatio', 'xMidYMid slice');
+
+    // Show emoji fallback for members without photo
+    nodes.filter((d) => !d.data.photo)
+      .append('text')
+      .attr('x', PHOTO_W / 2).attr('y', CARD_H / 2 + 2)
       .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-      .attr('font-size', '16px')
+      .attr('font-size', '28px')
       .text((d) => (!d.data.isLiving ? '🪦' : d.data.gender === 'male' ? '👨' : d.data.gender === 'female' ? '👩' : '🧑'));
 
+    // Line 1: Bold Saint Name
     nodes.append('text')
-      .attr('x', 30).attr('y', 24)
+      .attr('x', PHOTO_W + 4).attr('y', 18)
+      .attr('font-size', '10px').attr('font-weight', '700')
+      .attr('fill', '#5c6bc0')
+      .text((d) => {
+        const saint = d.data.saintName || '';
+        return saint.length > 14 ? saint.substring(0, 14) + '…' : saint;
+      });
+
+    // Line 2: Full Name (lastName middleName firstName - first name always full)
+    nodes.append('text')
+      .attr('x', PHOTO_W + 4).attr('y', 34)
       .attr('font-size', '11px').attr('font-weight', '600')
       .attr('fill', (d) => (d.data.isLiving ? '#212121' : '#78909c'))
       .text((d) => {
-        const n = `${d.data.firstName} ${d.data.lastName}`;
-        return n.length > 16 ? n.substring(0, 16) + '…' : n;
+        const last = d.data.lastName || '';
+        const middle = d.data.middleName || '';
+        const first = d.data.firstName || '';
+        const fullName = `${last} ${middle} ${first}`.trim();
+        if (fullName.length <= 14) return fullName;
+        // Keep first name full, truncate middle first
+        const noMiddle = `${last} ${first}`.trim();
+        if (noMiddle.length <= 14) return noMiddle;
+        // Still too long, truncate last name
+        const maxLast = 14 - first.length - 1;
+        if (maxLast >= 2) {
+          return `${last.substring(0, maxLast)}… ${first}`;
+        }
+        return first;
       });
 
+    // Line 3: Date of Birth (dd/mm/yyyy)
     nodes.append('text')
-      .attr('x', 30).attr('y', 42)
+      .attr('x', PHOTO_W + 4).attr('y', 50)
       .attr('font-size', '9px').attr('fill', '#757575')
       .text((d) => {
-        const b = d.data.birthDate ? new Date(d.data.birthDate).getFullYear() : '';
-        if (!d.data.isLiving && d.data.deathDate) return `${b} – ${new Date(d.data.deathDate).getFullYear()}`;
-        return b ? `b. ${b}` : '';
-      });
-
-    nodes.append('circle')
-      .attr('cx', SECTION_W - 12).attr('cy', 12).attr('r', 3.5)
-      .attr('fill', (d) => {
-        if (!d.data.isLiving) return '#90a4ae';
-        const hasDiv = (d.data.spouses || []).some((s) => s.status === 'divorced');
-        if (hasDiv) return '#e65100';
-        return '#4caf50';
+        if (!d.data.birthDate) return '';
+        const date = new Date(d.data.birthDate);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
       });
 
     // Explore icon for single cards with hidden ancestors
@@ -2084,17 +2212,6 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       });
 
     // Single card drag
-    nodes.call(d3.drag()
-      .on('start', function () { d3.select(this).raise(); })
-      .on('drag', function (e, d) {
-        d3.select(this).attr('transform', `translate(${e.x}, ${e.y})`);
-        allPos[d.data._id] = { x: e.x + SECTION_W / 2, y: e.y + CARD_H / 2 };
-        updateLinksForMember(d.data._id);
-      })
-      .on('end', (e, d) => {
-        updateMemberPosition(treeId, d.data._id, { x: e.x + SECTION_W / 2, y: e.y + CARD_H / 2 }).catch(console.error);
-      })
-    );
 
     // ── 10. Divorced link lines ───────────────────────────
     divorcedList.forEach((c) => {

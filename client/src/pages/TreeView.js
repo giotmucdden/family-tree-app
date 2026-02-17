@@ -3,16 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getTree, addMember, updateMember, deleteMember, createBranchTree, exportMembersExcel, importMembersExcel } from '../api';
 import FamilyTreeCanvas from '../components/FamilyTreeCanvas';
 import MemberModal from '../components/MemberModal';
-import MemberDetail from '../components/MemberDetail';
 import MemberBottomBar from '../components/MemberBottomBar';
+import { useLanguage } from '../context/LanguageContext';
 
 function TreeView() {
+  const { t } = useLanguage();
   const { treeId } = useParams();
   const navigate = useNavigate();
   const [tree, setTree] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState(null);
-  const [showFullProfile, setShowFullProfile] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addParentInfo, setAddParentInfo] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
@@ -160,19 +160,19 @@ function TreeView() {
     <div className="tree-view">
       <div className="tree-toolbar">
         <button className="btn btn-outline" onClick={() => navigate('/')}>
-          ← Quay Lại
+          {t('tree_back')}
         </button>
         <h2>{tree?.name}</h2>
         <div className="toolbar-actions">
           <button className="btn btn-outline btn-export" onClick={handleExport}>
-            📥 Xuất Excel
+            {t('tree_export')}
           </button>
           <button
             className="btn btn-outline btn-import"
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
           >
-            {importing ? '⏳ Đang nhập...' : '📤 Nhập Excel'}
+            {importing ? t('tree_importing') : t('tree_import')}
           </button>
           <input
             ref={fileInputRef}
@@ -188,7 +188,7 @@ function TreeView() {
               setShowAddModal(true);
             }}
           >
-            + Thêm Thành Viên
+            {t('tree_add_member')}
           </button>
         </div>
       </div>
@@ -201,34 +201,24 @@ function TreeView() {
           onSelectMember={setSelectedMember}
           onAddChild={handleAddChild}
         />
-
-        {selectedMember && (
-            <MemberBottomBar
-              member={selectedMember}
-              onClose={() => { setSelectedMember(null); setShowFullProfile(false); }}
-              onViewProfile={() => setShowFullProfile(true)}
-            />
-          )}
-
-          {showFullProfile && selectedMember && (
-            <>
-              <div className="detail-panel-backdrop" onClick={() => { setSelectedMember(null); setShowFullProfile(false); }} />
-              <MemberDetail
-                member={selectedMember}
-                allMembers={tree?.members || []}
-                onClose={() => { setSelectedMember(null); setShowFullProfile(false); }}
-                onEdit={() => setEditingMember(selectedMember)}
-                onDelete={() => handleDeleteMember(selectedMember._id)}
-                onAddChild={() => handleAddChild(selectedMember._id)}
-                onCreateBranch={handleCreateBranch}
-              />
-            </>
-          )}
       </div>
+
+      {/* Enhanced Bottom Bar - replaces right panel */}
+      {selectedMember && (
+        <MemberBottomBar
+          member={selectedMember}
+          allMembers={tree?.members || []}
+          onClose={() => setSelectedMember(null)}
+          onEdit={() => setEditingMember(selectedMember)}
+          onDelete={() => handleDeleteMember(selectedMember._id)}
+          onAddChild={() => handleAddChild(selectedMember._id)}
+          onSelectMember={setSelectedMember}
+        />
+      )}
 
       {showAddModal && (
         <MemberModal
-          title={addParentInfo ? 'Thêm Con' : 'Thêm Thành Viên'}
+          title={addParentInfo ? t('tree_add_child') : t('modal_add_member')}
           members={tree?.members || []}
           onSubmit={handleAddMember}
           onClose={() => {
@@ -240,7 +230,7 @@ function TreeView() {
 
       {editingMember && (
         <MemberModal
-          title="Chỉnh Sửa Thành Viên"
+          title={t('modal_edit_member')}
           initialData={editingMember}
           members={tree?.members || []}
           onSubmit={handleUpdateMember}
@@ -252,7 +242,7 @@ function TreeView() {
         <div className="import-overlay">
           <div className="import-progress">
             <div className="spinner" />
-            <p>Đang nhập dữ liệu... Có thể mất một lúc với file lớn.</p>
+            <p>{t('tree_import_progress')}</p>
           </div>
         </div>
       )}
@@ -262,19 +252,19 @@ function TreeView() {
           <div className="import-result" onClick={(e) => e.stopPropagation()}>
             {importResult.error ? (
               <>
-                <h3>❌ Nhập Thất Bại</h3>
+                <h3>❌ {t('tree_import_failed')}</h3>
                 <p className="import-error">{importResult.error}</p>
               </>
             ) : (
               <>
-                <h3>✅ Nhập Hoàn Tất</h3>
+                <h3>✅ {t('tree_import_success')}</h3>
                 <div className="import-stats">
-                  <span className="stat-created">🆕 {importResult.created} đã tạo</span>
-                  <span className="stat-updated">✏️ {importResult.updated} đã cập nhật</span>
+                  <span className="stat-created">🆕 {importResult.created} {t('tree_import_created')}</span>
+                  <span className="stat-updated">✏️ {importResult.updated} {t('tree_import_updated')}</span>
                 </div>
                 {importResult.errors?.length > 0 && (
                   <div className="import-warnings">
-                    <h4>⚠️ {importResult.errors.length} vấn đề:</h4>
+                    <h4>⚠️ {importResult.errors.length} {t('tree_import_issues')}:</h4>
                     <ul>
                       {importResult.errors.map((err, i) => (
                         <li key={i}>{err}</li>
@@ -284,7 +274,7 @@ function TreeView() {
                 )}
               </>
             )}
-            <button className="btn btn-primary" onClick={() => setImportResult(null)}>Đóng</button>
+            <button className="btn btn-primary" onClick={() => setImportResult(null)}>{t('tree_close')}</button>
           </div>
         </div>
       )}

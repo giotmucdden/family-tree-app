@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 function countDescendantGenerations(memberId, allMembers, visited = new Set()) {
   if (visited.has(memberId)) return 0;
@@ -18,17 +19,31 @@ function countDescendantGenerations(memberId, allMembers, visited = new Set()) {
   return 1 + maxChildDepth;
 }
 
-function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChild, onCreateBranch }) {
-  const resolveName = (ref) => {
+function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChild, onCreateBranch, onSelectMember }) {
+  const { t } = useLanguage();
+
+  const resolveMember = (ref) => {
     if (!ref) return null;
-    if (typeof ref === 'object') return `${ref.firstName} ${ref.lastName}`;
-    return 'Đã liên kết';
+    if (typeof ref === 'object') return ref;
+    return allMembers.find((m) => m._id === ref);
+  };
+
+  const resolveName = (ref) => {
+    const m = resolveMember(ref);
+    if (!m) return null;
+    // saint-last-middle-first order
+    const parts = [];
+    if (m.saintName) parts.push(m.saintName);
+    if (m.lastName) parts.push(m.lastName);
+    if (m.middleName) parts.push(m.middleName);
+    if (m.firstName) parts.push(m.firstName);
+    return parts.join(' ');
   };
 
   const statusIcon = (status) => {
-    if (status === 'married') return '💚 Kết hôn';
-    if (status === 'divorced') return '⚡ Ly hôn';
-    if (status === 'widowed') return '🕊️ Góa';
+    if (status === 'married') return `💚 ${t('detail_married')}`;
+    if (status === 'divorced') return `⚡ ${t('detail_divorced')}`;
+    if (status === 'widowed') return `🕊️ ${t('detail_widowed')}`;
     return status;
   };
 
@@ -40,24 +55,29 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
   };
 
   const genderText = (gender) => {
-    if (gender === 'male') return 'Nam';
-    if (gender === 'female') return 'Nữ';
-    return 'Khác';
+    if (gender === 'male') return t('detail_male');
+    if (gender === 'female') return t('detail_female');
+    return t('detail_other');
   };
 
   const generations = allMembers
     ? countDescendantGenerations(member._id, allMembers)
     : 0;
 
+  const handleMemberClick = (ref) => {
+    const m = resolveMember(ref);
+    if (m && onSelectMember) {
+      onSelectMember(m);
+    }
+  };
+
   return (
     <div className="member-detail-panel">
       <div className="member-detail-header">
         <div className="member-avatar-lg">
-          {member.gender === 'male'
-            ? '👨'
-            : member.gender === 'female'
-            ? '👩'
-            : '🧑'}
+          {member.photoUrl ? (
+            <img src={member.photoUrl} alt={member.firstName} />
+          ) : member.gender === 'male' ? '👨' : member.gender === 'female' ? '👩' : '🧑'}
         </div>
         <button className="modal-close" onClick={onClose}>
           ×
@@ -65,13 +85,14 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
       </div>
 
       <h3>
-        {member.firstName} {member.lastName}
+        {member.saintName && <span className="saint-name">{member.saintName} </span>}
+        {member.lastName} {member.middleName && `${member.middleName} `}{member.firstName}
       </h3>
 
       <div className="member-info">
         {member.gender && (
           <div className="info-row">
-            <span className="info-label">Giới tính</span>
+            <span className="info-label">{t('modal_gender')}</span>
             <span className="info-value">
               {genderText(member.gender)}
             </span>
@@ -80,7 +101,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
         {member.birthDate && (
           <div className="info-row">
-            <span className="info-label">Ngày sinh</span>
+            <span className="info-label">{t('detail_birth')}</span>
             <span className="info-value">
               {new Date(member.birthDate).toLocaleDateString('vi-VN')}
             </span>
@@ -89,7 +110,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
         {!member.isLiving && member.deathDate && (
           <div className="info-row">
-            <span className="info-label">Ngày mất</span>
+            <span className="info-label">{t('detail_death')}</span>
             <span className="info-value">
               {new Date(member.deathDate).toLocaleDateString('vi-VN')}
             </span>
@@ -101,68 +122,79 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
           <span
             className={`info-badge ${member.isLiving ? 'living' : 'deceased'}`}
           >
-            {member.isLiving ? '● Còn sống' : '○ Đã mất'}
+            {member.isLiving ? t('detail_living') : t('detail_deceased')}
           </span>
         </div>
 
         {member.birthPlace && (
           <div className="info-row">
-            <span className="info-label">Nơi sinh</span>
+            <span className="info-label">{t('detail_birthplace')}</span>
             <span className="info-value">{member.birthPlace}</span>
           </div>
         )}
 
         {member.occupation && (
           <div className="info-row">
-            <span className="info-label">Nghề nghiệp</span>
+            <span className="info-label">{t('detail_occupation')}</span>
             <span className="info-value">{member.occupation}</span>
           </div>
         )}
 
         {member.email && (
           <div className="info-row">
-            <span className="info-label">Email</span>
+            <span className="info-label">{t('detail_email')}</span>
             <span className="info-value">{member.email}</span>
           </div>
         )}
 
         {member.phone && (
           <div className="info-row">
-            <span className="info-label">Điện thoại</span>
+            <span className="info-label">{t('detail_phone')}</span>
             <span className="info-value">{member.phone}</span>
           </div>
         )}
 
-        <div className="info-section-label">Gia đình</div>
+        <div className="info-section-label">{t('detail_parents')}</div>
 
         {resolveName(member.fatherId) && (
           <div className="info-row">
-            <span className="info-label">👨 Cha</span>
-            <span className="info-value info-link-father">
-              {resolveName(member.fatherId)}
-            </span>
+            <span className="info-label">👨 {t('detail_father')}</span>
+            <button
+              className="profile-link-btn"
+              onClick={() => handleMemberClick(member.fatherId)}
+            >
+              {resolveName(member.fatherId)} →
+            </button>
           </div>
         )}
 
         {resolveName(member.motherId) && (
           <div className="info-row">
-            <span className="info-label">👩 Mẹ</span>
-            <span className="info-value info-link-mother">
-              {resolveName(member.motherId)}
-            </span>
+            <span className="info-label">👩 {t('detail_mother')}</span>
+            <button
+              className="profile-link-btn"
+              onClick={() => handleMemberClick(member.motherId)}
+            >
+              {resolveName(member.motherId)} →
+            </button>
           </div>
         )}
 
         {member.spouses && member.spouses.length > 0 && (
           <>
             <div className="info-section-label" style={{ marginTop: 8 }}>
-              Vợ/Chồng
+              {t('detail_spouses')}
             </div>
             {member.spouses.map((sp, idx) => {
               const spouseName = resolveName(sp.memberId);
               return spouseName ? (
                 <div className="info-row" key={idx}>
-                  <span className="info-label">❤️ {spouseName}</span>
+                  <button
+                    className="profile-link-btn"
+                    onClick={() => handleMemberClick(sp.memberId)}
+                  >
+                    ❤️ {spouseName} →
+                  </button>
                   <span className={`info-badge ${statusBadgeClass(sp.status)}`}>
                     {statusIcon(sp.status)}
                   </span>
@@ -173,23 +205,30 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
         )}
 
         {member.childrenIds?.length > 0 && (
-          <div className="info-row">
-            <span className="info-label">Con cái</span>
-            <span className="info-value">
-              {member.childrenIds
-                .map((c) =>
-                  typeof c === 'object'
-                    ? `${c.firstName} ${c.lastName}`
-                    : 'Không rõ'
-                )
-                .join(', ')}
-            </span>
-          </div>
+          <>
+            <div className="info-section-label" style={{ marginTop: 8 }}>
+              {t('detail_children')}
+            </div>
+            {member.childrenIds.map((c, idx) => {
+              const child = resolveMember(c);
+              if (!child) return null;
+              return (
+                <div className="info-row" key={idx}>
+                  <button
+                    className="profile-link-btn"
+                    onClick={() => handleMemberClick(c)}
+                  >
+                    👶 {child.saintName ? `${child.saintName} ` : ''}{child.lastName} {child.middleName ? `${child.middleName} ` : ''}{child.firstName} →
+                  </button>
+                </div>
+              );
+            })}
+          </>
         )}
 
         {member.bio && (
           <div className="info-row info-bio">
-            <span className="info-label">Tiểu sử</span>
+            <span className="info-label">{t('detail_bio')}</span>
             <p className="info-value">{member.bio}</p>
           </div>
         )}
@@ -197,13 +236,13 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
       <div className="member-detail-actions">
         <button className="btn btn-primary btn-sm" onClick={onEdit}>
-          ✏️ Sửa
+          {t('detail_edit')}
         </button>
         <button className="btn btn-outline btn-sm" onClick={onAddChild}>
-          👶 Thêm Con
+          {t('detail_add_child')}
         </button>
         <button className="btn btn-danger btn-sm" onClick={onDelete}>
-          🗑️ Xóa
+          {t('detail_delete')}
         </button>
       </div>
 
@@ -213,7 +252,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
             className="btn btn-branch"
             onClick={() => onCreateBranch(member._id)}
           >
-            🌳 Tạo Gia Phả ({generations} thế hệ)
+            🌳 {t('detail_create_branch')} ({generations} thế hệ)
           </button>
           <p className="branch-hint">
             Tách thành viên này và tất cả con cháu thành cây gia phả mới trên Bảng điều khiển.

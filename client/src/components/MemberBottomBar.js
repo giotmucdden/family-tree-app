@@ -1,8 +1,31 @@
-function MemberBottomBar({ member, onClose, onViewProfile }) {
-  const resolveName = (ref) => {
+import { useLanguage } from '../context/LanguageContext';
+
+function MemberBottomBar({ member, allMembers, onClose, onEdit, onDelete, onAddChild, onSelectMember }) {
+  const { t } = useLanguage();
+
+  const resolveMember = (ref) => {
     if (!ref) return null;
-    if (typeof ref === 'object') return `${ref.firstName} ${ref.lastName}`;
-    return null;
+    if (typeof ref === 'object') return ref;
+    return allMembers?.find((m) => m._id === ref) || null;
+  };
+
+  const resolveName = (ref) => {
+    const m = resolveMember(ref);
+    if (!m) return null;
+    // saint-last-middle-first order
+    const parts = [];
+    if (m.saintName) parts.push(m.saintName);
+    if (m.lastName) parts.push(m.lastName);
+    if (m.middleName) parts.push(m.middleName);
+    if (m.firstName) parts.push(m.firstName);
+    return parts.join(' ');
+  };
+
+  const handleMemberClick = (ref) => {
+    const m = resolveMember(ref);
+    if (m && onSelectMember) {
+      onSelectMember(m);
+    }
   };
 
   const age = (() => {
@@ -19,114 +42,156 @@ function MemberBottomBar({ member, onClose, onViewProfile }) {
     return a;
   })();
 
-  const birthYear = member.birthDate
-    ? new Date(member.birthDate).getFullYear()
-    : null;
-  const deathYear =
-    !member.isLiving && member.deathDate
-      ? new Date(member.deathDate).getFullYear()
-      : null;
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
-  const fatherName = resolveName(member.fatherId);
-  const motherName = resolveName(member.motherId);
+  const fatherMember = resolveMember(member.fatherId);
+  const motherMember = resolveMember(member.motherId);
 
   const spouseInfo = (member.spouses || [])
     .map((sp) => {
-      const name = resolveName(sp.memberId);
-      return name ? { name, status: sp.status } : null;
+      const spouseMember = resolveMember(sp.memberId);
+      return spouseMember ? { member: spouseMember, name: resolveName(sp.memberId), status: sp.status } : null;
     })
     .filter(Boolean);
 
-  const childCount = member.childrenIds?.length || 0;
+  const childrenInfo = (member.childrenIds || [])
+    .map((c) => {
+      const childMember = resolveMember(c);
+      return childMember ? { member: childMember, name: resolveName(c) } : null;
+    })
+    .filter(Boolean);
+
+  const statusIcon = (status) => {
+    if (status === 'married') return '💚';
+    if (status === 'divorced') return '⚡';
+    if (status === 'widowed') return '🕊️';
+    return '';
+  };
 
   return (
-    <div className="member-bottom-bar">
-      <div className="bottom-bar-inner">
-        <div className="bottom-bar-avatar">
-          {!member.isLiving
-            ? '🪦'
-            : member.gender === 'male'
-            ? '👨'
-            : member.gender === 'female'
-            ? '👩'
-            : '🧑'}
-        </div>
+    <div className="member-bottom-bar-enhanced">
+      <div className="bottom-bar-header">
+        <button className="bottom-bar-close-btn" onClick={onClose}>✕</button>
+      </div>
 
-        <div className="bottom-bar-name">
-          <span className="bottom-bar-fullname">
-            {member.firstName} {member.lastName}
-          </span>
-          <span className="bottom-bar-life">
-            {birthYear && (
-              <>
-                {deathYear ? `${birthYear} – ${deathYear}` : `sinh ${birthYear}`}
-              </>
-            )}
-            {age != null && (
-              <span className="bottom-bar-age">
-                ({member.isLiving ? `${age} tuổi` : `mất lúc ${age} tuổi`})
+      <div className="bottom-bar-content">
+        {/* Left: Photo + Basic Info */}
+        <div className="bottom-bar-main">
+          <div className="bottom-bar-photo">
+            {member.photo ? (
+              <img src={member.photo} alt={member.firstName} />
+            ) : (
+              <span className="photo-emoji">
+                {!member.isLiving ? '🪦' : member.gender === 'male' ? '👨' : member.gender === 'female' ? '👩' : '🧑'}
               </span>
             )}
-          </span>
+          </div>
+
+          <div className="bottom-bar-basic">
+            <h3 className="member-fullname">
+              {member.saintName && <span className="saint-name">{member.saintName} </span>}
+              {member.lastName} {member.middleName && `${member.middleName} `}{member.firstName}
+            </h3>
+
+            <div className="member-meta">
+              <span className={`status-badge ${member.isLiving ? 'living' : 'deceased'}`}>
+                {member.isLiving ? t('detail_living') : t('detail_deceased')}
+              </span>
+              <span className="gender-badge">
+                {member.gender === 'male' ? '♂ Nam' : member.gender === 'female' ? '♀ Nữ' : '⚬ Khác'}
+              </span>
+            </div>
+
+            <div className="member-dates">
+              {member.birthDate && (
+                <span>🎂 {formatDate(member.birthDate)}</span>
+              )}
+              {!member.isLiving && member.deathDate && (
+                <span>✝️ {formatDate(member.deathDate)}</span>
+              )}
+              {age != null && (
+                <span className="age-info">
+                  ({member.isLiving ? `${age} tuổi` : `mất năm ${age} tuổi`})
+                </span>
+              )}
+            </div>
+
+            {member.birthPlace && (
+              <div className="member-extra">📍 {member.birthPlace}</div>
+            )}
+            {member.occupation && (
+              <div className="member-extra">💼 {member.occupation}</div>
+            )}
+          </div>
         </div>
 
-        <span className="bottom-bar-divider" />
-
-        <div className="bottom-bar-info">
-          <span
-            className={`bottom-bar-status ${
-              member.isLiving ? 'living' : 'deceased'
-            }`}
-          >
-            {member.isLiving ? '● Còn sống' : '○ Đã mất'}
-          </span>
-          {member.gender && (
-            <span className="bottom-bar-gender">
-              {member.gender === 'male'
-                ? '♂ Nam'
-                : member.gender === 'female'
-                ? '♀ Nữ'
-                : '⚥ Khác'}
-            </span>
-          )}
-        </div>
-
-        <span className="bottom-bar-divider" />
-
+        {/* Center: Family Links */}
         <div className="bottom-bar-family">
-          {fatherName && (
-            <span className="bottom-bar-relation">
-              👨 <strong>Cha:</strong> {fatherName}
-            </span>
+          {/* Parents */}
+          {(fatherMember || motherMember) && (
+            <div className="family-section">
+              <div className="family-section-title">{t('detail_parents')}</div>
+              <div className="family-links">
+                {fatherMember && (
+                  <button className="family-link-btn" onClick={() => handleMemberClick(member.fatherId)}>
+                    👨 {resolveName(member.fatherId)}
+                  </button>
+                )}
+                {motherMember && (
+                  <button className="family-link-btn" onClick={() => handleMemberClick(member.motherId)}>
+                    👩 {resolveName(member.motherId)}
+                  </button>
+                )}
+              </div>
+            </div>
           )}
-          {motherName && (
-            <span className="bottom-bar-relation">
-              👩 <strong>Mẹ:</strong> {motherName}
-            </span>
+
+          {/* Spouses */}
+          {spouseInfo.length > 0 && (
+            <div className="family-section">
+              <div className="family-section-title">{t('detail_spouses')}</div>
+              <div className="family-links">
+                {spouseInfo.map((sp, idx) => (
+                  <button key={idx} className="family-link-btn" onClick={() => handleMemberClick(sp.member)}>
+                    {statusIcon(sp.status)} {sp.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
-          {spouseInfo.length > 0 &&
-            spouseInfo.map((sp, i) => (
-              <span key={i} className="bottom-bar-relation">
-                ❤️ <strong>{sp.status === 'divorced' ? 'Cựu' : 'Vợ/Chồng'}:</strong>{' '}
-                {sp.name}
-              </span>
-            ))}
-          {childCount > 0 && (
-            <span className="bottom-bar-relation">
-              👶 <strong>Con:</strong> {childCount}
-            </span>
+
+          {/* Children */}
+          {childrenInfo.length > 0 && (
+            <div className="family-section">
+              <div className="family-section-title">{t('detail_children')} ({childrenInfo.length})</div>
+              <div className="family-links children-grid">
+                {childrenInfo.map((ch, idx) => (
+                  <button key={idx} className="family-link-btn small" onClick={() => handleMemberClick(ch.member)}>
+                    👶 {ch.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
+        {/* Right: Actions */}
         <div className="bottom-bar-actions">
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => onViewProfile && onViewProfile(member)}
-          >
-            Xem Hồ Sơ
+          <button className="action-btn edit" onClick={onEdit}>
+            ✏️ {t('detail_edit')}
           </button>
-          <button className="bottom-bar-close" onClick={onClose}>
-            ✕
+          <button className="action-btn add-child" onClick={onAddChild}>
+            👶 {t('detail_add_child')}
+          </button>
+          <button className="action-btn delete" onClick={onDelete}>
+            🗑️ {t('detail_delete')}
           </button>
         </div>
       </div>
