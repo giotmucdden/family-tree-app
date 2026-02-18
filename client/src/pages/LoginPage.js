@@ -198,9 +198,8 @@ function LoginPage() {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                placeholder={language === 'vi' ? 'Ít nhất 6 ký tự' : 'At least 6 characters'}
+                placeholder={language === 'vi' ? 'Mật khẩu' : 'Password'}
                 required
-                minLength={6}
               />
             </div>
           )}

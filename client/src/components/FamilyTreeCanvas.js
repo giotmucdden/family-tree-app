@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import * as d3 from 'd3';
 import { updateMemberPosition } from '../api';
+import { useLanguage } from '../context/LanguageContext';
 
 const SECTION_W = 180;
 const CARD_H = 72;
@@ -11,16 +12,11 @@ const H_GAP = 14;
 const COUPLE_GAP = 0;
 
 const FILTERS = { ALL: 'all', LIVING: 'living', DECEASED: 'deceased', DIVORCED: 'divorced' };
-const VIEWS = { TREE: 'tree', BRANCH: 'branch' };
-const D3_LAYOUTS = {
-  TIDY: 'tidy',
-  CLUSTER: 'cluster',
-  RADIAL: 'radial',
-  TREE_OF_LIFE: 'treeOfLife',
-  INDENTED: 'indented',
-};
+const VIEWS = { TREE: 'tree', BRANCH: 'branch' }; // TREE = top-down, BRANCH = left-to-right
+const D3_LAYOUTS = { TIDY: 'tidy' }; // Only tidy layout used now
 
-function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild }) {
+function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false }) {
+  const { t } = useLanguage();
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const zoomRef = useRef(null);
@@ -71,6 +67,100 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     }
     return members[0]._id;
   }, [members, treeRootId]);
+
+  // Find all root members (members without parents)
+  const findAllRoots = useCallback(() => {
+    if (!members || members.length === 0) return [];
+    const roots = [];
+    const hasParentLink = new Set();
+
+    // First, find all members that are children of someone
+    members.forEach((m) => {
+      (m.childrenIds || []).forEach((cRef) => {
+        const cId = rid(cRef);
+        if (cId) hasParentLink.add(cId);
+      });
+    });
+
+    // Also check fatherId/motherId
+    members.forEach((m) => {
+      if (rid(m.fatherId) || rid(m.motherId)) {
+        hasParentLink.add(m._id);
+      }
+    });
+
+    // Find members without parent links
+    members.forEach((m) => {
+      if (!hasParentLink.has(m._id)) {
+        roots.push(m._id);
+      }
+    });
+
+    // If no roots found, use the first member
+    if (roots.length === 0 && members.length > 0) {
+      roots.push(members[0]._id);
+    }
+
+    return roots;
+  }, [members]);
+
+  // Build hierarchy with multiple roots for admin view (shows all members)
+  const buildMultiRootHierarchy = useCallback(() => {
+    if (!members || members.length === 0) return null;
+
+    const lookup = {};
+    members.forEach((m) => { lookup[m._id] = { ...m, children: [] }; });
+
+    // Find all root members (no parents)
+    const roots = findAllRoots();
+    if (roots.length === 0) return null;
+
+    // Build parent-child relationships
+    const attached = new Set();
+
+    members.forEach((m) => {
+      const fId = rid(m.fatherId);
+      const mId = rid(m.motherId);
+
+      // Attach to father if exists
+      if (fId && lookup[fId] && !attached.has(m._id)) {
+        lookup[fId].children.push(lookup[m._id]);
+        attached.add(m._id);
+      }
+      // If no father but has mother, attach to mother
+      else if (mId && lookup[mId] && !attached.has(m._id)) {
+        lookup[mId].children.push(lookup[m._id]);
+        attached.add(m._id);
+      }
+    });
+
+    // Sort children by birthDate
+    Object.values(lookup).forEach((node) => {
+      if (node.children.length > 1) {
+        node.children.sort((a, b) => {
+          const aD = a.birthDate ? new Date(a.birthDate).getTime() : Infinity;
+          const bD = b.birthDate ? new Date(b.birthDate).getTime() : Infinity;
+          return aD - bD;
+        });
+      }
+    });
+
+    // If only one root, return it directly
+    if (roots.length === 1) {
+      return lookup[roots[0]];
+    }
+
+    // Create a virtual super-root to hold multiple root trees
+    const superRoot = {
+      _id: '__super_root__',
+      firstName: '',
+      lastName: '',
+      isVirtualRoot: true,
+      children: roots.map((rId) => lookup[rId]).filter(Boolean),
+    };
+
+    return superRoot;
+  }, [members, findAllRoots]);
 
   const buildHierarchy = useCallback((rootId) => {
     if (!members || members.length === 0) return null;
@@ -294,8 +384,15 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     // Spouse step: 0-gap between cards (edge-to-edge touching)
     const spouseStep = isBranch ? CARD_H : SECTION_W;
 
-    const effectiveRootId = viewRootId || findDefaultRoot();
-    const root = buildHierarchy(effectiveRootId);
+    // For admin, use multi-root hierarchy to show all members
+    // For non-admin, use single root hierarchy
+    let root;
+    if (isAdmin) {
+      root = buildMultiRootHierarchy();
+    } else {
+      const effectiveRootId = viewRootId || findDefaultRoot();
+      root = buildHierarchy(effectiveRootId);
+    }
     if (!root) return;
 
     const lookup = getLookup();
@@ -392,7 +489,10 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           .attr('transform', (d) => d.x >= Math.PI ? 'rotate(180)' : null)
           .attr('font-size', '11px')
           .attr('fill', '#424242')
-          .text((d) => `${d.data.firstName} ${d.data.lastName || ''}`);
+          .text((d) => {
+            const parts = [d.data.lastName, d.data.middleName, d.data.vnName, d.data.firstName].filter(Boolean);
+            return parts.join(' ');
+          });
 
         node.filter((d) => !d.data.isLiving)
           .append('text')
@@ -447,7 +547,8 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           .text((d) => {
             const em = d.data.gender === 'male' ? '👨' : d.data.gender === 'female' ? '👩' : '🧑';
             const life = d.data.isLiving ? '' : ' ✝';
-            return `${em} ${d.data.firstName} ${d.data.lastName || ''}${life}`;
+            const parts = [d.data.lastName, d.data.middleName, d.data.vnName, d.data.firstName].filter(Boolean);
+            return `${em} ${parts.join(' ')}${life}`;
           });
 
         node.filter((d) => d.children && d.children.length > 0)
@@ -479,12 +580,18 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     const hQueue = [root];
     while (hQueue.length) {
       const n = hQueue.shift();
-      hierarchyIds.add(n._id);
+      // Skip virtual super root
+      if (n._id !== '__super_root__') {
+        hierarchyIds.add(n._id);
+      }
       (n.children || []).forEach((c) => hQueue.push(c));
     }
 
+    // Get effective root ID (for single root mode, null for multi-root)
+    const effectiveRootId = root.isVirtualRoot ? null : root._id;
+
     const isBloodline = (id) => {
-      if (id === effectiveRootId) return true;
+      if (effectiveRootId && id === effectiveRootId) return true;
       return hierarchyIds.has(id);
     };
 
@@ -1987,7 +2094,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
             return saint.length > 14 ? saint.substring(0, 14) + '…' : saint;
           });
 
-        // Line 2: Full Name (lastName middleName firstName - first name always full)
+        // Line 2: lastName middleName vnName (full words)
         node.append('text')
           .attr('x', infoX).attr('y', cardY + 34)
           .attr('font-size', '11px').attr('font-weight', '600')
@@ -1995,31 +2102,17 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           .text(() => {
             const last = p.lastName || '';
             const middle = p.middleName || '';
-            const first = p.firstName || '';
-            const fullName = `${last} ${middle} ${first}`.trim();
-            if (fullName.length <= 14) return fullName;
-            // Keep first name full, truncate middle first
-            const noMiddle = `${last} ${first}`.trim();
-            if (noMiddle.length <= 14) return noMiddle;
-            // Still too long, truncate last name
-            const maxLast = 14 - first.length - 1;
-            if (maxLast >= 2) {
-              return `${last.substring(0, maxLast)}… ${first}`;
-            }
-            return first;
+            const vn = p.vnName || '';
+            return [last, middle, vn].filter(Boolean).join(' ');
           });
 
-        // Line 3: Date of Birth
+        // Line 3: firstName
         node.append('text')
           .attr('x', infoX).attr('y', cardY + 50)
-          .attr('font-size', '9px').attr('fill', '#757575')
+          .attr('font-size', '10px').attr('fill', p.isLiving ? '#424242' : '#78909c')
           .text(() => {
-            if (!p.birthDate) return '';
-            const d = new Date(p.birthDate);
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            return `${day}/${month}/${year}`;
+            const first = p.firstName || '';
+            return first.length > 14 ? first.substring(0, 14) + '…' : first;
           });
 
         // Explore icon for members with hidden ancestors
@@ -2148,7 +2241,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         return saint.length > 14 ? saint.substring(0, 14) + '…' : saint;
       });
 
-    // Line 2: Full Name (lastName middleName firstName - first name always full)
+    // Line 2: lastName middleName vnName (full words)
     nodes.append('text')
       .attr('x', PHOTO_W + 4).attr('y', 34)
       .attr('font-size', '11px').attr('font-weight', '600')
@@ -2156,31 +2249,17 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       .text((d) => {
         const last = d.data.lastName || '';
         const middle = d.data.middleName || '';
-        const first = d.data.firstName || '';
-        const fullName = `${last} ${middle} ${first}`.trim();
-        if (fullName.length <= 14) return fullName;
-        // Keep first name full, truncate middle first
-        const noMiddle = `${last} ${first}`.trim();
-        if (noMiddle.length <= 14) return noMiddle;
-        // Still too long, truncate last name
-        const maxLast = 14 - first.length - 1;
-        if (maxLast >= 2) {
-          return `${last.substring(0, maxLast)}… ${first}`;
-        }
-        return first;
+        const vn = d.data.vnName || '';
+        return [last, middle, vn].filter(Boolean).join(' ');
       });
 
-    // Line 3: Date of Birth (dd/mm/yyyy)
+    // Line 3: firstName
     nodes.append('text')
       .attr('x', PHOTO_W + 4).attr('y', 50)
-      .attr('font-size', '9px').attr('fill', '#757575')
+      .attr('font-size', '10px').attr('fill', (d) => (d.data.isLiving ? '#424242' : '#78909c'))
       .text((d) => {
-        if (!d.data.birthDate) return '';
-        const date = new Date(d.data.birthDate);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
+        const first = d.data.firstName || '';
+        return first.length > 14 ? first.substring(0, 14) + '…' : first;
       });
 
     // Explore icon for single cards with hidden ancestors
@@ -2322,12 +2401,14 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
     });
 
-  }, [members, treeId, activeFilter, viewRootId, viewMode, d3Layout, buildHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen]);
+  }, [members, treeId, activeFilter, viewRootId, viewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin]);
 
   const viewRootName = (() => {
     if (!viewRootId || !members) return null;
     const m = members.find((x) => x._id === viewRootId);
-    return m ? `${m.firstName} ${m.lastName}` : null;
+    if (!m) return null;
+    const parts = [m.lastName, m.middleName, m.vnName, m.firstName].filter(Boolean);
+    return parts.join(' ');
   })();
 
   function handleZoomIn() {
@@ -2342,58 +2423,46 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
   return (
     <div className="tree-canvas-wrapper" ref={containerRef}>
       <div className="tree-filter-bar">
-        <div className="view-toggle">
+        {/* View buttons - Tree (top-down) and Branch (left-to-right) */}
+        <div className="filter-toggle-group">
           <button
-            className={`view-btn ${viewMode === VIEWS.TREE ? 'active' : ''}`}
+            className={`toggle-btn ${viewMode === VIEWS.TREE ? 'active' : ''}`}
             onClick={() => setViewMode(VIEWS.TREE)}
-            title="Chế độ Cây — trên xuống dưới, trái sang phải theo tuổi"
+            title="Cây dọc (trên xuống)"
           >
-            🌳 Cây
+            🌳 {t('filter_tree')}
           </button>
           <button
-            className={`view-btn ${viewMode === VIEWS.BRANCH ? 'active' : ''}`}
+            className={`toggle-btn ${viewMode === VIEWS.BRANCH ? 'active' : ''}`}
             onClick={() => setViewMode(VIEWS.BRANCH)}
-            title="Chế độ Nhánh — trái sang phải, trên xuống dưới theo tuổi"
+            title="Cây ngang (trái sang phải)"
           >
-            🌿 Nhánh
+            🌿 {t('filter_branch')}
           </button>
         </div>
-        <span className="filter-divider">|</span>
-        <div className="d3-layout-select">
-          <label className="d3-layout-label" htmlFor="d3layout">D3</label>
+
+        {/* Admin-only controls */}
+        {isAdmin && (
           <select
-            id="d3layout"
-            className="d3-layout-dropdown"
-            value={d3Layout}
-            onChange={(e) => setD3Layout(e.target.value)}
+            value={activeFilter}
+            onChange={(e) => setActiveFilter(e.target.value)}
+            className="filter-select"
           >
-            <option value={D3_LAYOUTS.TIDY}>Cây Gọn</option>
-            <option value={D3_LAYOUTS.CLUSTER}>Cây Cụm</option>
-            <option value={D3_LAYOUTS.RADIAL}>Cây Tròn</option>
-            <option value={D3_LAYOUTS.TREE_OF_LIFE}>Cây Đời</option>
-            <option value={D3_LAYOUTS.INDENTED}>Cây Thụt</option>
+            {Object.entries(FILTERS).map(([key, val]) => (
+              <option key={key} value={val}>
+                {t(`filter_${val}`)}
+              </option>
+            ))}
           </select>
-        </div>
-        <span className="filter-divider">|</span>
-        <span className="filter-label">Lọc:</span>
-        {[
-          { key: FILTERS.ALL, label: '🌳 Tất cả', color: '' },
-          { key: FILTERS.LIVING, label: '💚 Còn sống', color: 'living' },
-          { key: FILTERS.DECEASED, label: '✝ Đã mất', color: 'deceased' },
-          { key: FILTERS.DIVORCED, label: '⚡ Ly hôn', color: 'divorced' },
-        ].map((f) => (
-          <button key={f.key} className={`filter-btn ${f.color} ${activeFilter === f.key ? 'active' : ''}`} onClick={() => setActiveFilter(f.key)}>
-            {f.label}
-          </button>
-        ))}
+        )}
       </div>
 
       {viewRootId && viewRootName && (
         <div className="tree-root-banner">
           <span>👑 Đang xem từ: <strong>{viewRootName}</strong></span>
-            <button className="btn btn-outline btn-sm" onClick={resetRoot}>
-              ↩ Quay về cây đầy đủ
-            </button>
+          <button className="btn btn-outline btn-sm" onClick={resetRoot}>
+            ↩ Quay về cây đầy đủ
+          </button>
         </div>
       )}
 

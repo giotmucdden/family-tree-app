@@ -52,6 +52,12 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
     return typeof ref === 'object' ? ref._id : ref;
   };
 
+  // Helper to display full member name: lastName middleName vnName firstName
+  const formatMemberName = (m) => {
+    const parts = [m.lastName, m.middleName, m.vnName, m.firstName].filter(Boolean);
+    return parts.join(' ');
+  };
+
   const initSpouses = () => {
     if (initialData?.spouses && initialData.spouses.length > 0) {
       return initialData.spouses.map((sp) => ({
@@ -76,6 +82,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
     saintName: initialData?.saintName || '',
     firstName: initialData?.firstName || '',
     middleName: initialData?.middleName || '',
+    vnName: initialData?.vnName || '',
     lastName: initialData?.lastName || '',
     gender: initialData?.gender || 'other',
     birthDate: initialData?.birthDate
@@ -164,10 +171,20 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.firstName.trim() || !form.lastName.trim()) {
-      alert('Họ và tên là bắt buộc');
+    console.log('Form submitted - form data:', JSON.stringify(form, null, 2));
+    console.log('vnName value:', form.vnName, 'firstName value:', form.firstName);
+    if (!form.lastName.trim()) {
+      alert('Họ là bắt buộc');
       return;
     }
+    const hasVnName = form.vnName && form.vnName.trim();
+    const hasFirstName = form.firstName && form.firstName.trim();
+    console.log('hasVnName:', hasVnName, 'hasFirstName:', hasFirstName);
+    if (!hasVnName && !hasFirstName) {
+      alert('Tên hoặc Tên Việt là bắt buộc (ít nhất một)');
+      return;
+    }
+    console.log('Validation passed, saving...');
     setSaving(true);
     try {
       const data = { ...form };
@@ -269,7 +286,6 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
               value={form.lastName}
               onChange={handleChange}
               placeholder="Nguyễn"
-              required
             />
           </div>
           <div className="form-group">
@@ -283,6 +299,16 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
             />
           </div>
           <div className="form-group">
+            <label>{t('modal_vn_name')} *</label>
+            <input
+              type="text"
+              name="vnName"
+              value={form.vnName}
+              onChange={handleChange}
+              placeholder="Tên Việt"
+            />
+          </div>
+          <div className="form-group">
             <label>{t('modal_first_name')} *</label>
             <input
               type="text"
@@ -290,7 +316,6 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
               value={form.firstName}
               onChange={handleChange}
               placeholder="An"
-              required
               autoFocus
             />
           </div>
@@ -411,7 +436,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
               <option value="">{t('modal_none')}</option>
               {males.map((m) => (
                 <option key={m._id} value={m._id}>
-                  {m.lastName} {m.firstName}
+                  {formatMemberName(m)}
                 </option>
               ))}
             </select>
@@ -426,7 +451,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
               <option value="">{t('modal_none')}</option>
               {females.map((m) => (
                 <option key={m._id} value={m._id}>
-                  {m.lastName} {m.firstName}
+                  {formatMemberName(m)}
                 </option>
               ))}
             </select>
@@ -470,7 +495,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
                   )
                   .map((m) => (
                     <option key={m._id} value={m._id}>
-                      {m.lastName} {m.firstName} (
+                      {formatMemberName(m)} (
                       {m.gender === 'male'
                         ? '♂'
                         : m.gender === 'female'
@@ -553,7 +578,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
                       <option value="">-- Chọn thành viên --</option>
                       {availableChildren.map((m) => (
                         <option key={m._id} value={m._id}>
-                          {m.lastName} {m.firstName} (
+                          {formatMemberName(m)} (
                           {m.gender === 'male'
                             ? '♂'
                             : m.gender === 'female'
@@ -584,17 +609,33 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
       </div>
 
       {/* Fixed Footer */}
-      <div className="modal-actions" style={{ flexShrink: 0 }}>
+      <div className="modal-actions" style={{ flexShrink: 0, display: 'flex', gap: '8px', padding: '12px 16px' }}>
         {initialData && onDelete && (
-          <button type="button" className="btn btn-danger" onClick={onDelete}>
-            🗑️ {t('detail_delete')}
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={onDelete}
+            style={{ flex: 1 }}
+          >
+            {t('detail_delete')}
           </button>
         )}
-        <div className="modal-actions-spacer" />
-        <button type="button" className="btn btn-outline" onClick={onClose}>
+        <button
+          type="button"
+          className="btn btn-outline"
+          onClick={onClose}
+          style={{ flex: initialData && onDelete ? 2 : 1 }}
+        >
           {t('modal_cancel')}
         </button>
-        <button type="submit" form="member-form" className="btn btn-primary" disabled={saving}>
+        <button
+          type="submit"
+          form="member-form"
+          className="btn btn-primary"
+          disabled={saving}
+          style={{ flex: initialData && onDelete ? 3 : 2 }}
+          onClick={() => console.log('Save button clicked')}
+        >
           {saving ? t('modal_saving') : (initialData ? t('modal_save') : t('modal_add'))}
         </button>
       </div>

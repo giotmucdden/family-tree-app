@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [trees, setTrees] = useState([]);
@@ -72,9 +72,11 @@ function Dashboard() {
           <h1>{t('dash_title')}</h1>
           <p>Xin chào, {user?.firstName || user?.displayName}!</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          + {t('dash_create')}
-        </button>
+        {isAdmin() && (
+          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
+            + {t('dash_create')}
+          </button>
+        )}
       </div>
 
       {showCreate && (
@@ -122,12 +124,14 @@ function Dashboard() {
           <span className="empty-icon">🌱</span>
           <h2>{t('dash_no_trees')}</h2>
           <p>Tạo gia phả đầu tiên để bắt đầu!</p>
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowCreate(true)}
-          >
-            {t('dash_create')}
-          </button>
+          {isAdmin() && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowCreate(true)}
+            >
+              {t('dash_create')}
+            </button>
+          )}
         </div>
       ) : (
         <div className="tree-grid">
@@ -156,15 +160,17 @@ function Dashboard() {
                 >
                   {t('dash_view')}
                 </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(tree._id);
-                  }}
-                >
-                  {t('dash_delete')}
-                </button>
+                {isAdmin() && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(tree._id);
+                    }}
+                  >
+                    {t('dash_delete')}
+                  </button>
+                )}
               </div>
             </div>
           ))}

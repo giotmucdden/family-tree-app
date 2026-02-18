@@ -1,6 +1,6 @@
 import { useLanguage } from '../context/LanguageContext';
 
-function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }) {
+function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember, canEdit = true }) {
   const { t } = useLanguage();
 
   const resolveMember = (ref) => {
@@ -12,19 +12,31 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }
   const resolveName = (ref) => {
     const m = resolveMember(ref);
     if (!m) return null;
-    // saint-last-middle-first order
+    // Short name: last-vn-first order (without middleName)
     const parts = [];
-    if (m.saintName) parts.push(m.saintName);
     if (m.lastName) parts.push(m.lastName);
-    if (m.middleName) parts.push(m.middleName);
+    if (m.vnName) parts.push(m.vnName);
     if (m.firstName) parts.push(m.firstName);
     return parts.join(' ');
   };
 
   const handleMemberClick = (ref) => {
-    const m = resolveMember(ref);
-    if (m && onSelectMember) {
-      onSelectMember(m);
+    if (!ref || !onSelectMember) return;
+
+    // Get the member ID from the reference
+    let memberId;
+    if (typeof ref === 'object' && ref._id) {
+      memberId = ref._id;
+    } else if (typeof ref === 'string') {
+      memberId = ref;
+    } else {
+      return;
+    }
+
+    // Find the full member from allMembers by ID
+    const fullMember = allMembers?.find((m) => m._id === memberId || m._id.toString() === memberId.toString());
+    if (fullMember) {
+      onSelectMember(fullMember);
     }
   };
 
@@ -97,7 +109,7 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }
           <div className="bottom-bar-basic">
             <h3 className="member-fullname">
               {member.saintName && <span className="saint-name">{member.saintName} </span>}
-              {member.lastName} {member.middleName && `${member.middleName} `}{member.firstName}
+              {member.lastName} {member.middleName && `${member.middleName} `}{member.vnName && `${member.vnName} `}{member.firstName}
             </h3>
 
             <div className="member-meta">
@@ -141,12 +153,12 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }
               <div className="family-links">
                 {fatherMember && (
                   <button className="family-link-btn" onClick={() => handleMemberClick(member.fatherId)}>
-                    👨 {resolveName(member.fatherId)}
+                    <span className="link-icon">👨 </span>{resolveName(member.fatherId)}
                   </button>
                 )}
                 {motherMember && (
                   <button className="family-link-btn" onClick={() => handleMemberClick(member.motherId)}>
-                    👩 {resolveName(member.motherId)}
+                    <span className="link-icon">👩 </span>{resolveName(member.motherId)}
                   </button>
                 )}
               </div>
@@ -160,7 +172,7 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }
               <div className="family-links">
                 {spouseInfo.map((sp, idx) => (
                   <button key={idx} className="family-link-btn" onClick={() => handleMemberClick(sp.member)}>
-                    {statusIcon(sp.status)} {sp.name}
+                    <span className="link-icon">{statusIcon(sp.status)} </span>{sp.name}
                   </button>
                 ))}
               </div>
@@ -174,7 +186,7 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }
               <div className="family-links children-grid">
                 {childrenInfo.map((ch, idx) => (
                   <button key={idx} className="family-link-btn small" onClick={() => handleMemberClick(ch.member)}>
-                    👶 {ch.name}
+                    <span className="link-icon">👶 </span>{ch.name}
                   </button>
                 ))}
               </div>
@@ -182,12 +194,14 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }
           )}
         </div>
 
-        {/* Right: Actions */}
-        <div className="bottom-bar-actions">
-          <button className="action-btn edit" onClick={onEdit}>
-            ✏️ {t('detail_edit')}
-          </button>
-        </div>
+        {/* Right: Actions - Only show if user can edit */}
+        {canEdit && (
+          <div className="bottom-bar-actions">
+            <button className="action-btn edit" onClick={onEdit}>
+              {t('detail_edit')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

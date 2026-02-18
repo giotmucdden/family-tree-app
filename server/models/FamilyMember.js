@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 const familyMemberSchema = new mongoose.Schema(
   {
-    firstName: {
-      type: String,
-      required: true,
-    },
+    firstName: String,
     lastName: {
       type: String,
       required: true,
     },
+    middleName: String,
+    vnName: String,
+    saintName: String,
     gender: {
       type: String,
       enum: ['male', 'female', 'other'],

@@ -23,12 +23,18 @@ router.post('/register', async (req, res) => {
 
     const displayName = lastName ? `${firstName} ${lastName}` : firstName;
 
+    // Check if there's a member with this email to auto-link
+    const FamilyMember = require('../models/FamilyMember');
+    const linkedMember = await FamilyMember.findOne({ email: email.toLowerCase() });
+
     const user = new User({
       email: email.toLowerCase(),
       password,
       firstName,
       lastName,
       displayName,
+      role: 'member', // New users are members by default
+      linkedMemberId: linkedMember ? linkedMember._id : null,
     });
 
     await user.save();
@@ -45,6 +51,8 @@ router.post('/register', async (req, res) => {
           lastName: user.lastName,
           email: user.email,
           profilePhoto: user.profilePhoto,
+          role: user.role,
+          linkedMemberId: user.linkedMemberId,
         },
       });
     });
@@ -77,6 +85,16 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
     }
 
+    // Check if user needs to be linked to a member
+    if (!user.linkedMemberId) {
+      const FamilyMember = require('../models/FamilyMember');
+      const linkedMember = await FamilyMember.findOne({ email: email.toLowerCase() });
+      if (linkedMember) {
+        user.linkedMemberId = linkedMember._id;
+        await user.save();
+      }
+    }
+
     req.login(user, (err) => {
       if (err) {
         return res.status(500).json({ error: 'Đăng nhập thất bại' });
@@ -89,6 +107,8 @@ router.post('/login', async (req, res) => {
           lastName: user.lastName,
           email: user.email,
           profilePhoto: user.profilePhoto,
+          role: user.role,
+          linkedMemberId: user.linkedMemberId,
         },
       });
     });
@@ -110,6 +130,8 @@ router.get('/current-user', (req, res) => {
         lastName: req.user.lastName,
         email: req.user.email,
         profilePhoto: req.user.profilePhoto,
+        role: req.user.role,
+        linkedMemberId: req.user.linkedMemberId,
       },
     });
   } else {

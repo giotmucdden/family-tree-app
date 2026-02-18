@@ -31,11 +31,12 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
   const resolveName = (ref) => {
     const m = resolveMember(ref);
     if (!m) return null;
-    // saint-last-middle-first order
+    // saint-last-middle-vn-first order
     const parts = [];
     if (m.saintName) parts.push(m.saintName);
     if (m.lastName) parts.push(m.lastName);
     if (m.middleName) parts.push(m.middleName);
+    if (m.vnName) parts.push(m.vnName);
     if (m.firstName) parts.push(m.firstName);
     return parts.join(' ');
   };
@@ -86,7 +87,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
 
       <h3>
         {member.saintName && <span className="saint-name">{member.saintName} </span>}
-        {member.lastName} {member.middleName && `${member.middleName} `}{member.firstName}
+        {member.lastName} {member.middleName && `${member.middleName} `}{member.vnName && `${member.vnName} `}{member.firstName}
       </h3>
 
       <div className="member-info">
@@ -218,7 +219,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
                     className="profile-link-btn"
                     onClick={() => handleMemberClick(c)}
                   >
-                    👶 {child.saintName ? `${child.saintName} ` : ''}{child.lastName} {child.middleName ? `${child.middleName} ` : ''}{child.firstName} →
+                    👶 {child.saintName ? `${child.saintName} ` : ''}{child.lastName} {child.middleName ? `${child.middleName} ` : ''}{child.vnName ? `${child.vnName} ` : ''}{child.firstName} →
                   </button>
                 </div>
               );

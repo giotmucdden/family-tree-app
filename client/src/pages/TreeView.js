@@ -5,9 +5,11 @@ import FamilyTreeCanvas from '../components/FamilyTreeCanvas';
 import MemberModal from '../components/MemberModal';
 import MemberBottomBar from '../components/MemberBottomBar';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 function TreeView() {
   const { t } = useLanguage();
+  const { user, isAdmin, canEditMember } = useAuth();
   const { treeId } = useParams();
   const navigate = useNavigate();
   const [tree, setTree] = useState(null);
@@ -19,6 +21,9 @@ function TreeView() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Debug: log user role
+  console.log('TreeView - User:', user?.email, 'Role:', user?.role, 'isAdmin():', isAdmin());
 
   const loadTree = useCallback(async () => {
     try {
@@ -164,32 +169,37 @@ function TreeView() {
         </button>
         <h2>{tree?.name}</h2>
         <div className="toolbar-actions">
-          <button className="btn btn-outline btn-export" onClick={handleExport}>
-            {t('tree_export')}
-          </button>
-          <button
-            className="btn btn-outline btn-import"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-          >
-            {importing ? t('tree_importing') : t('tree_import')}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            style={{ display: 'none' }}
-            onChange={handleImportFile}
-          />
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setAddParentInfo(null);
-              setShowAddModal(true);
-            }}
-          >
-            {t('tree_add_member')}
-          </button>
+          {/* Admin-only actions */}
+          {isAdmin() && (
+            <>
+              <button className="btn btn-outline btn-export" onClick={handleExport}>
+                {t('tree_export')}
+              </button>
+              <button
+                className="btn btn-outline btn-import"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                {importing ? t('tree_importing') : t('tree_import')}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv,.numbers"
+                style={{ display: 'none' }}
+                onChange={handleImportFile}
+              />
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setAddParentInfo(null);
+                  setShowAddModal(true);
+                }}
+              >
+                {t('tree_add_member')}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -200,6 +210,7 @@ function TreeView() {
           treeRootId={tree?.rootMember}
           onSelectMember={setSelectedMember}
           onAddChild={handleAddChild}
+          isAdmin={isAdmin()}
         />
       </div>
 
@@ -211,6 +222,7 @@ function TreeView() {
           onClose={() => setSelectedMember(null)}
           onEdit={() => setEditingMember(selectedMember)}
           onSelectMember={setSelectedMember}
+          canEdit={isAdmin() || canEditMember(selectedMember._id, tree?.members || [])}
         />
       )}
 
@@ -233,16 +245,16 @@ function TreeView() {
           members={tree?.members || []}
           onSubmit={handleUpdateMember}
           onClose={() => setEditingMember(null)}
-          onAddChild={() => {
+          onAddChild={isAdmin() || canEditMember(editingMember._id, tree?.members || []) ? () => {
             const memberId = editingMember._id;
             setEditingMember(null);
             handleAddChild(memberId);
-          }}
-          onDelete={() => {
+          } : null}
+          onDelete={isAdmin() || canEditMember(editingMember._id, tree?.members || []) ? () => {
             const memberId = editingMember._id;
             setEditingMember(null);
             handleDeleteMember(memberId);
-          }}
+          } : null}
         />
       )}
 

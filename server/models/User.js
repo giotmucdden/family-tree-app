@@ -31,6 +31,16 @@ const userSchema = new mongoose.Schema(
     profilePhoto: String,
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    role: {
+      type: String,
+      enum: ['admin', 'member'],
+      default: 'member',
+    },
+    linkedMemberId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'FamilyMember',
+      default: null,
+    },
     familyTrees: [
       {
         type: mongoose.Schema.Types.ObjectId,
