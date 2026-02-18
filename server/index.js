@@ -57,6 +57,104 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Migration endpoint - runs within Railway network to access internal MongoDB
+app.post('/api/migrate', async (req, res) => {
+  const { secret } = req.body;
+  
+  // Simple security check - require a secret key
+  if (secret !== 'migrate-fam-tree-2024') {
+    return res.status(403).json({ error: 'Invalid migration secret' });
+  }
+  
+  try {
+    const User = require('./models/User');
+    const FamilyTree = require('./models/FamilyTree');
+    const FamilyMember = require('./models/FamilyMember');
+    
+    // Import data from JSON files
+    const usersData = require('./migration-data-users.json');
+    const treesData = require('./migration-data-trees.json');
+    const membersData = require('./migration-data-members.json');
+    
+    const results = {
+      users: { before: 0, after: 0 },
+      trees: { before: 0, after: 0 },
+      members: { before: 0, after: 0 },
+    };
+    
+    // Count existing data
+    results.users.before = await User.countDocuments();
+    results.trees.before = await FamilyTree.countDocuments();
+    results.members.before = await FamilyMember.countDocuments();
+    
+    // Clear existing data
+    await User.deleteMany({});
+    await FamilyTree.deleteMany({});
+    await FamilyMember.deleteMany({});
+    
+    // Insert users
+    for (const user of usersData) {
+      const userData = {
+        ...user,
+        _id: user._id.$oid || user._id,
+        familyTrees: (user.familyTrees || []).map(t => t.$oid || t),
+        linkedMemberId: user.linkedMemberId?.$oid || user.linkedMemberId || null,
+        createdAt: user.createdAt?.$date ? new Date(user.createdAt.$date) : user.createdAt,
+        updatedAt: user.updatedAt?.$date ? new Date(user.updatedAt.$date) : user.updatedAt,
+      };
+      await User.create(userData);
+    }
+    results.users.after = await User.countDocuments();
+    
+    // Insert trees
+    for (const tree of treesData) {
+      const treeData = {
+        ...tree,
+        _id: tree._id.$oid || tree._id,
+        owner: tree.owner.$oid || tree.owner,
+        rootMember: tree.rootMember?.$oid || tree.rootMember || null,
+        members: (tree.members || []).map(m => m.$oid || m),
+        createdAt: tree.createdAt?.$date ? new Date(tree.createdAt.$date) : tree.createdAt,
+        updatedAt: tree.updatedAt?.$date ? new Date(tree.updatedAt.$date) : tree.updatedAt,
+      };
+      await FamilyTree.create(treeData);
+    }
+    results.trees.after = await FamilyTree.countDocuments();
+    
+    // Insert members
+    for (const member of membersData) {
+      const memberData = {
+        ...member,
+        _id: member._id.$oid || member._id,
+        familyTree: member.familyTree.$oid || member.familyTree,
+        fatherId: member.fatherId?.$oid || member.fatherId || null,
+        motherId: member.motherId?.$oid || member.motherId || null,
+        childrenIds: (member.childrenIds || []).map(c => c.$oid || c),
+        spouses: (member.spouses || []).map(sp => ({
+          memberId: sp.memberId?.$oid || sp.memberId,
+          status: sp.status || 'married',
+          _id: sp._id?.$oid || sp._id,
+        })),
+        birthDate: member.birthDate?.$date ? new Date(member.birthDate.$date) : member.birthDate,
+        deathDate: member.deathDate?.$date ? new Date(member.deathDate.$date) : member.deathDate,
+        createdAt: member.createdAt?.$date ? new Date(member.createdAt.$date) : member.createdAt,
+        updatedAt: member.updatedAt?.$date ? new Date(member.updatedAt.$date) : member.updatedAt,
+      };
+      await FamilyMember.create(memberData);
+    }
+    results.members.after = await FamilyMember.countDocuments();
+    
+    res.json({
+      success: true,
+      message: 'Migration completed successfully',
+      results,
+    });
+  } catch (err) {
+    console.error('Migration error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Serve React build in production ──────────────────────
 const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
 app.use(express.static(clientBuildPath));
