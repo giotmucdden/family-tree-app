@@ -57,30 +57,58 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Password reset endpoint for admin use
-app.post('/api/reset-password', async (req, res) => {
-  const { secret, email, newPassword } = req.body;
+// Debug user endpoint (temporary)
+app.post('/api/debug-user', async (req, res) => {
+  const { secret, email } = req.body;
   
   if (secret !== 'migrate-fam-tree-2024') {
     return res.status(403).json({ error: 'Invalid secret' });
   }
   
   try {
-    const bcrypt = require('bcryptjs');
     const User = require('./models/User');
-    
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
+    res.json({
+      email: user.email,
+      hasPassword: !!user.password,
+      passwordLength: user.password ? user.password.length : 0,
+      passwordPrefix: user.password ? user.password.substring(0, 10) : null,
+      role: user.role,
+      facebookId: user.facebookId,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Password reset endpoint for admin use
+app.post('/api/reset-password', async (req, res) => {
+  const { secret, email, newPassword } = req.body;
+
+  if (secret !== 'migrate-fam-tree-2024') {
+    return res.status(403).json({ error: 'Invalid secret' });
+  }
+
+  try {
+    const bcrypt = require('bcryptjs');
+    const User = require('./models/User');
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     // Hash password and update directly to avoid double-hashing from pre-save hook
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await User.updateOne(
       { _id: user._id },
       { $set: { password: hashedPassword } }
     );
-    
+
     res.json({ success: true, message: `Password updated for ${email}` });
   } catch (err) {
     console.error('Password reset error:', err);
