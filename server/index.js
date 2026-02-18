@@ -74,9 +74,12 @@ app.post('/api/reset-password', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
+    // Hash password and update directly to avoid double-hashing from pre-save hook
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { password: hashedPassword } }
+    );
     
     res.json({ success: true, message: `Password updated for ${email}` });
   } catch (err) {
