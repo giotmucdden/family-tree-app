@@ -18,7 +18,7 @@ async function migrate() {
   try {
     console.log('Connecting to MongoDB...');
     console.log('URI:', process.env.MONGO_URI ? 'Found' : 'NOT FOUND');
-    
+
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
 

@@ -57,41 +57,69 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Password reset endpoint for admin use
+app.post('/api/reset-password', async (req, res) => {
+  const { secret, email, newPassword } = req.body;
+  
+  if (secret !== 'migrate-fam-tree-2024') {
+    return res.status(403).json({ error: 'Invalid secret' });
+  }
+  
+  try {
+    const bcrypt = require('bcrypt');
+    const User = require('./models/User');
+    
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+    
+    res.json({ success: true, message: `Password updated for ${email}` });
+  } catch (err) {
+    console.error('Password reset error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Migration endpoint - runs within Railway network to access internal MongoDB
 app.post('/api/migrate', async (req, res) => {
   const { secret } = req.body;
-  
+
   // Simple security check - require a secret key
   if (secret !== 'migrate-fam-tree-2024') {
     return res.status(403).json({ error: 'Invalid migration secret' });
   }
-  
+
   try {
     const User = require('./models/User');
     const FamilyTree = require('./models/FamilyTree');
     const FamilyMember = require('./models/FamilyMember');
-    
+
     // Import data from JSON files
     const usersData = require('./migration-data-users.json');
     const treesData = require('./migration-data-trees.json');
     const membersData = require('./migration-data-members.json');
-    
+
     const results = {
       users: { before: 0, after: 0 },
       trees: { before: 0, after: 0 },
       members: { before: 0, after: 0 },
     };
-    
+
     // Count existing data
     results.users.before = await User.countDocuments();
     results.trees.before = await FamilyTree.countDocuments();
     results.members.before = await FamilyMember.countDocuments();
-    
+
     // Clear existing data
     await User.deleteMany({});
     await FamilyTree.deleteMany({});
     await FamilyMember.deleteMany({});
-    
+
     // Insert users
     for (const user of usersData) {
       const userData = {
@@ -105,7 +133,7 @@ app.post('/api/migrate', async (req, res) => {
       await User.create(userData);
     }
     results.users.after = await User.countDocuments();
-    
+
     // Insert trees
     for (const tree of treesData) {
       const treeData = {
@@ -120,7 +148,7 @@ app.post('/api/migrate', async (req, res) => {
       await FamilyTree.create(treeData);
     }
     results.trees.after = await FamilyTree.countDocuments();
-    
+
     // Insert members
     for (const member of membersData) {
       const memberData = {
@@ -143,7 +171,7 @@ app.post('/api/migrate', async (req, res) => {
       await FamilyMember.create(memberData);
     }
     results.members.after = await FamilyMember.countDocuments();
-    
+
     res.json({
       success: true,
       message: 'Migration completed successfully',
