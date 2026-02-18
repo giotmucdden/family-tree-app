@@ -6,29 +6,44 @@ Modal.setAppElement('#root');
 
 const customStyles = {
   overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     zIndex: 1000,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '16px',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   content: {
-    position: 'relative',
-    inset: 'auto',
-    maxWidth: '600px',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
-    maxHeight: 'calc(100vh - 32px)',
-    overflow: 'auto',
-    borderRadius: '12px',
-    padding: '0',
+    height: '100%',
+    overflow: 'hidden',
+    borderRadius: 0,
+    padding: 0,
     border: 'none',
     background: '#fff',
-    margin: '0 auto',
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
   },
 };
 
-function MemberModal({ title, initialData, members, onSubmit, onClose }) {
+const scrollContainerStyle = {
+  flex: 1,
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  WebkitOverflowScrolling: 'touch',
+  padding: '16px',
+  touchAction: 'pan-y',
+  overscrollBehavior: 'contain',
+};
+
+function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChild, onDelete }) {
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
 
@@ -42,6 +57,16 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
       return initialData.spouses.map((sp) => ({
         memberId: resolveId(sp.memberId),
         status: sp.status || 'married',
+      }));
+    }
+    return [];
+  };
+
+  const initChildren = () => {
+    if (initialData?.childrenIds && initialData.childrenIds.length > 0) {
+      return initialData.childrenIds.map((c) => ({
+        memberId: resolveId(c),
+        isNew: false,
       }));
     }
     return [];
@@ -71,6 +96,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
   });
 
   const [spouses, setSpouses] = useState(initSpouses);
+  const [children, setChildren] = useState(initChildren);
   const [photoPreview, setPhotoPreview] = useState(initialData?.photo || '');
   const [saving, setSaving] = useState(false);
 
@@ -120,6 +146,22 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
     setSpouses((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function handleChildChange(index, value) {
+    setChildren((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], memberId: value };
+      return updated;
+    });
+  }
+
+  function addChildRow() {
+    setChildren((prev) => [...prev, { memberId: '', isNew: false }]);
+  }
+
+  function removeChildRow(index) {
+    setChildren((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim()) {
@@ -136,6 +178,9 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
 
       const validSpouses = spouses.filter((sp) => sp.memberId);
       data.spouses = validSpouses;
+
+      const validChildren = children.filter((ch) => ch.memberId);
+      data.linkedChildrenIds = validChildren.map((ch) => ch.memberId);
 
       await onSubmit(data);
     } finally {
@@ -162,13 +207,16 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
       style={customStyles}
       contentLabel={title}
     >
-      <div className="modal-header">
+      <div className="modal-header" style={{ flexShrink: 0 }}>
         <h2>{title}</h2>
         <button className="modal-close" onClick={onClose}>
           ×
         </button>
       </div>
-      <form onSubmit={handleSubmit} className="modal-form">
+
+      {/* Scrollable Form Container */}
+      <div style={scrollContainerStyle}>
+        <form id="member-form" onSubmit={handleSubmit}>
         <div className="form-section-label">{t('modal_photo')}</div>
         <div className="photo-upload-section">
           {photoPreview ? (
@@ -288,6 +336,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
               value={form.deathDate}
               onChange={handleChange}
               disabled={form.isLiving}
+              style={form.isLiving ? { backgroundColor: '#f0f0f0', color: '#999', cursor: 'not-allowed' } : {}}
             />
           </div>
         </div>
@@ -315,6 +364,40 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
           </div>
         </div>
 
+        <div className="form-row">
+          <div className="form-group">
+            <label>{t('modal_email')}</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="email@example.com"
+            />
+          </div>
+          <div className="form-group">
+            <label>{t('modal_phone')}</label>
+            <input
+              type="tel"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="+84 123 456 789"
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>{t('modal_bio')}</label>
+          <textarea
+            name="bio"
+            value={form.bio}
+            onChange={handleChange}
+            placeholder="Tiểu sử ngắn..."
+            rows={3}
+          />
+        </div>
+
         <div className="form-section-label">{t('modal_family')}</div>
 
         <div className="form-row">
@@ -328,7 +411,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
               <option value="">{t('modal_none')}</option>
               {males.map((m) => (
                 <option key={m._id} value={m._id}>
-                  {m.firstName} {m.lastName}
+                  {m.lastName} {m.firstName}
                 </option>
               ))}
             </select>
@@ -343,7 +426,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
               <option value="">{t('modal_none')}</option>
               {females.map((m) => (
                 <option key={m._id} value={m._id}>
-                  {m.firstName} {m.lastName}
+                  {m.lastName} {m.firstName}
                 </option>
               ))}
             </select>
@@ -387,7 +470,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
                   )
                   .map((m) => (
                     <option key={m._id} value={m._id}>
-                      {m.firstName} {m.lastName} (
+                      {m.lastName} {m.firstName} (
                       {m.gender === 'male'
                         ? '♂'
                         : m.gender === 'female'
@@ -422,49 +505,99 @@ function MemberModal({ title, initialData, members, onSubmit, onClose }) {
           </div>
         ))}
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>{t('modal_email')}</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="email@example.com"
-            />
-          </div>
-          <div className="form-group">
-            <label>{t('modal_phone')}</label>
-            <input
-              type="tel"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              placeholder="+84 123 456 789"
-            />
-          </div>
-        </div>
+        {initialData && (
+          <>
+            <div className="form-section-label">
+              Con cái
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                style={{ marginLeft: 12, fontSize: 11, padding: '2px 10px' }}
+                onClick={addChildRow}
+              >
+                + Thêm Con (chọn thành viên)
+              </button>
+              {onAddChild && (
+                <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  style={{ marginLeft: 8, fontSize: 11, padding: '2px 10px' }}
+                  onClick={onAddChild}
+                >
+                  + Tạo Con mới
+                </button>
+              )}
+            </div>
 
-        <div className="form-group">
-          <label>{t('modal_bio')}</label>
-          <textarea
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            placeholder="Tiểu sử ngắn..."
-            rows={3}
-          />
-        </div>
+            {children.length === 0 && (
+              <p style={{ fontSize: 13, color: '#999', marginBottom: 12 }}>
+                Chưa có con. Nhấn "+ Thêm Con" để chọn từ thành viên hiện có hoặc "+ Tạo Con mới" để thêm mới.
+              </p>
+            )}
 
-        <div className="modal-actions">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
-            {t('modal_cancel')}
+            {children.map((ch, idx) => {
+              const usedChildIds = children.map((c) => c.memberId);
+              const availableChildren = members.filter(
+                (m) =>
+                  m._id !== initialData?._id &&
+                  (m._id === ch.memberId || !usedChildIds.includes(m._id))
+              );
+              return (
+                <div className="form-row spouse-row" key={idx}>
+                  <div className="form-group" style={{ flex: 1, position: 'relative' }}>
+                    <label>👶 Con {idx + 1}</label>
+                    <select
+                      value={ch.memberId}
+                      onChange={(e) => handleChildChange(idx, e.target.value)}
+                    >
+                      <option value="">-- Chọn thành viên --</option>
+                      {availableChildren.map((m) => (
+                        <option key={m._id} value={m._id}>
+                          {m.lastName} {m.firstName} (
+                          {m.gender === 'male'
+                            ? '♂'
+                            : m.gender === 'female'
+                            ? '♀'
+                            : '⚬'}
+                          )
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="spouse-remove-btn"
+                      title="Xóa con"
+                      onClick={() => removeChildRow(idx)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* Bottom padding for scrolling */}
+        <div style={{ height: 20 }} />
+        </form>
+      </div>
+
+      {/* Fixed Footer */}
+      <div className="modal-actions" style={{ flexShrink: 0 }}>
+        {initialData && onDelete && (
+          <button type="button" className="btn btn-danger" onClick={onDelete}>
+            🗑️ {t('detail_delete')}
           </button>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? t('modal_saving') : (initialData ? t('modal_save') : t('modal_add'))}
-          </button>
-        </div>
-      </form>
+        )}
+        <div className="modal-actions-spacer" />
+        <button type="button" className="btn btn-outline" onClick={onClose}>
+          {t('modal_cancel')}
+        </button>
+        <button type="submit" form="member-form" className="btn btn-primary" disabled={saving}>
+          {saving ? t('modal_saving') : (initialData ? t('modal_save') : t('modal_add'))}
+        </button>
+      </div>
     </Modal>
   );
 }

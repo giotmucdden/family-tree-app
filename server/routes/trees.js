@@ -155,8 +155,54 @@ router.post('/:treeId/members', async (req, res) => {
 
 router.put('/:treeId/members/:memberId', async (req, res) => {
   try {
+    const memberId = req.params.memberId;
+    const treeId = req.params.treeId;
+
+    // Handle linkedChildrenIds - update children's parent references
+    if (req.body.linkedChildrenIds) {
+      const linkedChildrenIds = req.body.linkedChildrenIds;
+      delete req.body.linkedChildrenIds;
+
+      // Get current member to determine gender for parent assignment
+      const currentMember = await FamilyMember.findById(memberId);
+      if (currentMember) {
+        const parentField = currentMember.gender === 'female' ? 'motherId' : 'fatherId';
+
+        // Get existing children
+        const existingChildIds = (currentMember.childrenIds || []).map(c =>
+          typeof c === 'object' ? c._id.toString() : c.toString()
+        );
+
+        // Find children to add (in linkedChildrenIds but not in existingChildIds)
+        const toAdd = linkedChildrenIds.filter(id => !existingChildIds.includes(id));
+
+        // Find children to remove (in existingChildIds but not in linkedChildrenIds)
+        const toRemove = existingChildIds.filter(id => !linkedChildrenIds.includes(id));
+
+        // Add new children - set their parent ID and add to childrenIds
+        for (const childId of toAdd) {
+          await FamilyMember.findByIdAndUpdate(childId, {
+            $set: { [parentField]: memberId }
+          });
+          await FamilyMember.findByIdAndUpdate(memberId, {
+            $addToSet: { childrenIds: childId }
+          });
+        }
+
+        // Remove children - unset their parent ID and remove from childrenIds
+        for (const childId of toRemove) {
+          await FamilyMember.findByIdAndUpdate(childId, {
+            $unset: { [parentField]: '' }
+          });
+          await FamilyMember.findByIdAndUpdate(memberId, {
+            $pull: { childrenIds: childId }
+          });
+        }
+      }
+    }
+
     const member = await FamilyMember.findOneAndUpdate(
-      { _id: req.params.memberId, familyTree: req.params.treeId },
+      { _id: memberId, familyTree: treeId },
       { $set: req.body },
       { new: true }
     )

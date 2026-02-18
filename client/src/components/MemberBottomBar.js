@@ -1,6 +1,6 @@
 import { useLanguage } from '../context/LanguageContext';
 
-function MemberBottomBar({ member, allMembers, onClose, onEdit, onDelete, onAddChild, onSelectMember }) {
+function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember }) {
   const { t } = useLanguage();
 
   const resolveMember = (ref) => {
@@ -186,12 +186,6 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onDelete, onAddC
         <div className="bottom-bar-actions">
           <button className="action-btn edit" onClick={onEdit}>
             ✏️ {t('detail_edit')}
-          </button>
-          <button className="action-btn add-child" onClick={onAddChild}>
-            👶 {t('detail_add_child')}
-          </button>
-          <button className="action-btn delete" onClick={onDelete}>
-            🗑️ {t('detail_delete')}
           </button>
         </div>
       </div>

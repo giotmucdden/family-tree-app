@@ -210,8 +210,6 @@ function TreeView() {
           allMembers={tree?.members || []}
           onClose={() => setSelectedMember(null)}
           onEdit={() => setEditingMember(selectedMember)}
-          onDelete={() => handleDeleteMember(selectedMember._id)}
-          onAddChild={() => handleAddChild(selectedMember._id)}
           onSelectMember={setSelectedMember}
         />
       )}
@@ -235,6 +233,16 @@ function TreeView() {
           members={tree?.members || []}
           onSubmit={handleUpdateMember}
           onClose={() => setEditingMember(null)}
+          onAddChild={() => {
+            const memberId = editingMember._id;
+            setEditingMember(null);
+            handleAddChild(memberId);
+          }}
+          onDelete={() => {
+            const memberId = editingMember._id;
+            setEditingMember(null);
+            handleDeleteMember(memberId);
+          }}
         />
       )}
 
