@@ -60,18 +60,18 @@ app.get('/api/health', (req, res) => {
 // Debug user endpoint (temporary)
 app.post('/api/debug-user', async (req, res) => {
   const { secret, email } = req.body;
-  
+
   if (secret !== 'migrate-fam-tree-2024') {
     return res.status(403).json({ error: 'Invalid secret' });
   }
-  
+
   try {
     const User = require('./models/User');
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     res.json({
       email: user.email,
       hasPassword: !!user.password,
@@ -151,17 +151,19 @@ app.post('/api/migrate', async (req, res) => {
     await FamilyTree.deleteMany({});
     await FamilyMember.deleteMany({});
 
-    // Insert users
+    // Insert users - use insertOne to bypass pre-save hook (passwords already hashed)
+    const mongoose = require('mongoose');
     for (const user of usersData) {
       const userData = {
         ...user,
-        _id: user._id.$oid || user._id,
-        familyTrees: (user.familyTrees || []).map(t => t.$oid || t),
-        linkedMemberId: user.linkedMemberId?.$oid || user.linkedMemberId || null,
-        createdAt: user.createdAt?.$date ? new Date(user.createdAt.$date) : user.createdAt,
-        updatedAt: user.updatedAt?.$date ? new Date(user.updatedAt.$date) : user.updatedAt,
+        _id: new mongoose.Types.ObjectId(user._id.$oid || user._id),
+        familyTrees: (user.familyTrees || []).map(t => new mongoose.Types.ObjectId(t.$oid || t)),
+        linkedMemberId: user.linkedMemberId ? new mongoose.Types.ObjectId(user.linkedMemberId.$oid || user.linkedMemberId) : null,
+        createdAt: user.createdAt?.$date ? new Date(user.createdAt.$date) : new Date(user.createdAt),
+        updatedAt: user.updatedAt?.$date ? new Date(user.updatedAt.$date) : new Date(user.updatedAt),
       };
-      await User.create(userData);
+      // Use collection.insertOne to bypass Mongoose middleware (password already hashed)
+      await User.collection.insertOne(userData);
     }
     results.users.after = await User.countDocuments();
 
