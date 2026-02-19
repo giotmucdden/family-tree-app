@@ -246,6 +246,51 @@ router.put('/:treeId/members/:memberId', async (req, res) => {
       return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa' });
     }
 
+    // Handle bidirectional parent-child linking when fatherId or motherId changes
+    if (req.body.fatherId !== undefined || req.body.motherId !== undefined) {
+      const currentMember = await FamilyMember.findById(memberId);
+
+      // Handle fatherId changes
+      if (req.body.fatherId !== undefined) {
+        const oldFatherId = currentMember?.fatherId?.toString() || null;
+        const newFatherId = req.body.fatherId || null;
+
+        // Remove from old father's childrenIds
+        if (oldFatherId && oldFatherId !== newFatherId) {
+          await FamilyMember.findByIdAndUpdate(oldFatherId, {
+            $pull: { childrenIds: memberId }
+          });
+        }
+
+        // Add to new father's childrenIds
+        if (newFatherId && newFatherId !== oldFatherId) {
+          await FamilyMember.findByIdAndUpdate(newFatherId, {
+            $addToSet: { childrenIds: memberId }
+          });
+        }
+      }
+
+      // Handle motherId changes
+      if (req.body.motherId !== undefined) {
+        const oldMotherId = currentMember?.motherId?.toString() || null;
+        const newMotherId = req.body.motherId || null;
+
+        // Remove from old mother's childrenIds
+        if (oldMotherId && oldMotherId !== newMotherId) {
+          await FamilyMember.findByIdAndUpdate(oldMotherId, {
+            $pull: { childrenIds: memberId }
+          });
+        }
+
+        // Add to new mother's childrenIds
+        if (newMotherId && newMotherId !== oldMotherId) {
+          await FamilyMember.findByIdAndUpdate(newMotherId, {
+            $addToSet: { childrenIds: memberId }
+          });
+        }
+      }
+    }
+
     // Handle bidirectional spouse linking
     if (req.body.spouses !== undefined) {
       const currentMember = await FamilyMember.findById(memberId);

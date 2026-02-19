@@ -18,7 +18,7 @@ function Navbar() {
           onClick={toggleLanguage}
           title={language === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
         >
-          {language === 'vi' ? '🇺🇸 EN' : '🇻🇳 VI'}
+          {language === 'vi' ? 'EN' : 'VI'}
         </button>
         {user?.profilePhoto && (
           <img

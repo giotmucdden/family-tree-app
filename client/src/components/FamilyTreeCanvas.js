@@ -15,7 +15,7 @@ const FILTERS = { ALL: 'all', LIVING: 'living', DECEASED: 'deceased', DIVORCED: 
 const VIEWS = { TREE: 'tree', BRANCH: 'branch' }; // TREE = top-down, BRANCH = left-to-right
 const D3_LAYOUTS = { TIDY: 'tidy' }; // Only tidy layout used now
 
-function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false }) {
+function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false, viewMode, onViewModeChange, userLinkedMemberId }) {
   const { t } = useLanguage();
   const svgRef = useRef(null);
   const containerRef = useRef(null);
@@ -25,13 +25,26 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
   const onAddChildRef = useRef(onAddChild);
   const [activeFilter, setActiveFilter] = useState(FILTERS.ALL);
   const [viewRootId, setViewRootId] = useState(null);
-  const [viewMode, setViewMode] = useState(VIEWS.TREE);
+  // Use prop viewMode if provided, otherwise use local state
+  const [localViewMode, setLocalViewMode] = useState(viewMode || VIEWS.TREE);
+  const effectiveViewMode = viewMode !== undefined ? viewMode : localViewMode;
   const [d3Layout, setD3Layout] = useState(D3_LAYOUTS.TIDY);
   const [selectedMemberId, setSelectedMemberId] = useState(null);
+  const [focusedMemberId, setFocusedMemberId] = useState(null); // For generation navigation
   const childLinkElemsRef = useRef({});
 
   onSelectMemberRef.current = onSelectMember;
   onAddChildRef.current = onAddChild;
+
+  // Initialize viewRootId with userLinkedMemberId for member users
+  useEffect(() => {
+    if (userLinkedMemberId && members && members.length > 0) {
+      const linkedMember = members.find(m => m._id === userLinkedMemberId);
+      if (linkedMember) {
+        setViewRootId(userLinkedMemberId);
+      }
+    }
+  }, [userLinkedMemberId, members]);
 
   const rid = (ref) => (ref && typeof ref === 'object' ? ref._id : ref);
 
@@ -114,22 +127,43 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     // Find all root members (no parents)
     const roots = findAllRoots();
     if (roots.length === 0) return null;
+    const rootSet = new Set(roots);
 
     // Build parent-child relationships
+    // Priority: attach to parent who is NOT a root (has ancestors) to maintain generation levels
     const attached = new Set();
 
     members.forEach((m) => {
       const fId = rid(m.fatherId);
       const mId = rid(m.motherId);
 
-      // Attach to father if exists
-      if (fId && lookup[fId] && !attached.has(m._id)) {
-        lookup[fId].children.push(lookup[m._id]);
-        attached.add(m._id);
+      if (!fId && !mId) return; // No parents, skip
+
+      // Determine which parent to attach to based on hierarchy depth
+      // Prefer the parent who is NOT a root (has parents themselves)
+      let attachToId = null;
+
+      if (fId && mId && lookup[fId] && lookup[mId]) {
+        // Both parents exist - prefer the one with parents (not a root)
+        const fatherIsRoot = rootSet.has(fId);
+        const motherIsRoot = rootSet.has(mId);
+
+        if (!fatherIsRoot && motherIsRoot) {
+          attachToId = fId; // Father has parents, attach to father
+        } else if (fatherIsRoot && !motherIsRoot) {
+          attachToId = mId; // Mother has parents, attach to mother
+        } else {
+          // Both are roots or both have parents - prefer father
+          attachToId = fId;
+        }
+      } else if (fId && lookup[fId]) {
+        attachToId = fId;
+      } else if (mId && lookup[mId]) {
+        attachToId = mId;
       }
-      // If no father but has mother, attach to mother
-      else if (mId && lookup[mId] && !attached.has(m._id)) {
-        lookup[mId].children.push(lookup[m._id]);
+
+      if (attachToId && !attached.has(m._id)) {
+        lookup[attachToId].children.push(lookup[m._id]);
         attached.add(m._id);
       }
     });
@@ -380,18 +414,18 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
   useEffect(() => {
     if (!members || members.length === 0) return;
 
-    const isBranch = viewMode === VIEWS.BRANCH;
+    const isBranch = effectiveViewMode === VIEWS.BRANCH;
     // Spouse step: 0-gap between cards (edge-to-edge touching)
     const spouseStep = isBranch ? CARD_H : SECTION_W;
 
-    // For admin, use multi-root hierarchy to show all members
-    // For non-admin, use single root hierarchy
+    // For admin, always use multi-root hierarchy to show all members
+    // For non-admin with viewRootId set, show that specific branch
+    // For non-admin with viewRootId null (reset), show full tree
     let root;
-    if (isAdmin) {
+    if (isAdmin || !viewRootId) {
       root = buildMultiRootHierarchy();
     } else {
-      const effectiveRootId = viewRootId || findDefaultRoot();
-      root = buildHierarchy(effectiveRootId);
+      root = buildHierarchy(viewRootId);
     }
     if (!root) return;
 
@@ -1932,7 +1966,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       });
     }
 
-    svg.on('click', () => { clearHighlight(); if (onSelectMemberRef.current) onSelectMemberRef.current(null); });
+    svg.on('click', () => { clearHighlight(); setFocusedMemberId(null); if (onSelectMemberRef.current) onSelectMemberRef.current(null); });
 
     // ── Visibility filter ────────────────────────────────
     const isVisible = (m) => {
@@ -1998,7 +2032,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           .attr('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))')
           .attr('opacity', isVisible(p) ? 1 : 0.3)
           .style('cursor', 'pointer')
-          .on('click', (e) => { e.stopPropagation(); highlightUpstream(mem.id); if (onSelectMemberRef.current) onSelectMemberRef.current(lookup[mem.id]); });
+          .on('click', (e) => { e.stopPropagation(); highlightUpstream(mem.id); setFocusedMemberId(mem.id); if (onSelectMemberRef.current) onSelectMemberRef.current(lookup[mem.id]); });
 
         // Connection line + relationship emoji between adjacent cards
         if (i > 0) {
@@ -2116,24 +2150,34 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           });
 
         // Explore icon for members with hidden ancestors
-        if (hasHiddenAncestor.has(mem.id)) {
-          const expX = cardX + SECTION_W - 26;
-          const expY = cardY + CARD_H - 18;
-          const expW = 22;
-          const expH = 16;
-          node.append('rect')
-            .attr('x', expX).attr('y', expY)
-            .attr('width', expW).attr('height', expH).attr('rx', 4)
-            .attr('fill', '#e8eaf6').attr('stroke', '#7986cb').attr('stroke-width', 0.8)
-            .style('cursor', 'pointer')
-            .on('mousedown', (e) => { e.stopPropagation(); })
-            .on('touchstart', (e) => { e.stopPropagation(); })
-            .on('click', (e) => {
-              e.stopPropagation();
-              const oldest = findOldestAncestor(mem.id);
-              setViewRootId(oldest);
-            });
-          node.append('text')
+          if (hasHiddenAncestor.has(mem.id)) {
+            const expX = cardX + SECTION_W - 26;
+            const expY = cardY + CARD_H - 18;
+            const expW = 22;
+            const expH = 16;
+            console.log('Adding expand icon for member:', mem.id, 'at', expX, expY);
+            node.append('rect')
+              .attr('x', expX).attr('y', expY)
+              .attr('width', expW).attr('height', expH).attr('rx', 4)
+              .attr('fill', '#e8eaf6').attr('stroke', '#7986cb').attr('stroke-width', 0.8)
+              .style('cursor', 'pointer')
+              .on('mousedown', (e) => { e.stopPropagation(); })
+              .on('touchstart', (e) => { e.stopPropagation(); })
+              .on('click', (e) => {
+                e.stopPropagation();
+                // Navigate to parent's branch - use actual parent from member data
+                const memberData = lookup[mem.id];
+                const fatherId = memberData?.fatherId?._id || memberData?.fatherId;
+                const motherId = memberData?.motherId?._id || memberData?.motherId;
+                const parentId = fatherId || motherId;
+                if (parentId && parentId !== viewRootId) {
+                  setViewRootId(parentId);
+                } else {
+                  // If no parent or already at parent, go to full tree
+                  setViewRootId(null);
+                }
+              });
+            node.append('text')
             .attr('x', expX + expW / 2).attr('y', expY + expH / 2)
             .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
             .attr('font-size', '11px')
@@ -2181,7 +2225,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       .attr('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))')
       .attr('opacity', (d) => (isVisible(d.data) ? 1 : 0.3))
       .style('cursor', 'pointer')
-      .on('click', (e, d) => { e.stopPropagation(); highlightUpstream(d.data._id); if (onSelectMemberRef.current) onSelectMemberRef.current(d.data); });
+      .on('click', (e, d) => { e.stopPropagation(); highlightUpstream(d.data._id); setFocusedMemberId(d.data._id); if (onSelectMemberRef.current) onSelectMemberRef.current(d.data); });
 
     nodes.filter((d) => isCurrentRoot(d.data._id) && viewRootId)
       .append('text')
@@ -2401,7 +2445,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
     });
 
-  }, [members, treeId, activeFilter, viewRootId, viewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin]);
+  }, [members, treeId, activeFilter, viewRootId, effectiveViewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin]);
 
   const viewRootName = (() => {
     if (!viewRootId || !members) return null;
@@ -2410,6 +2454,49 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     const parts = [m.lastName, m.middleName, m.vnName, m.firstName].filter(Boolean);
     return parts.join(' ');
   })();
+
+  // Get focused member info for generation navigation
+  const focusedMember = focusedMemberId ? members.find(m => m._id === focusedMemberId) : null;
+  const focusedMemberName = focusedMember ? (() => {
+    const parts = [focusedMember.lastName, focusedMember.vnName, focusedMember.firstName].filter(Boolean);
+    return parts.join(' ');
+  })() : null;
+
+  // Get parent info for navigation
+  const getFatherInfo = () => {
+    if (!focusedMember) return null;
+    const fatherId = typeof focusedMember.fatherId === 'object' ? focusedMember.fatherId?._id : focusedMember.fatherId;
+    if (!fatherId) return null;
+    const father = members.find(m => m._id === fatherId);
+    if (!father) return null;
+    const parts = [father.lastName, father.vnName, father.firstName].filter(Boolean);
+    return { id: fatherId, name: parts.join(' ') };
+  };
+
+  const getMotherInfo = () => {
+    if (!focusedMember) return null;
+    const motherId = typeof focusedMember.motherId === 'object' ? focusedMember.motherId?._id : focusedMember.motherId;
+    if (!motherId) return null;
+    const mother = members.find(m => m._id === motherId);
+    if (!mother) return null;
+    const parts = [mother.lastName, mother.vnName, mother.firstName].filter(Boolean);
+    return { id: motherId, name: parts.join(' ') };
+  };
+
+  const fatherInfo = getFatherInfo();
+  const motherInfo = getMotherInfo();
+
+  // Navigate to parent generation
+  const navigateToParent = (parentId) => {
+    console.log('navigateToParent called with:', parentId);
+    setFocusedMemberId(parentId);
+    setViewRootId(parentId);
+  };
+
+  // Set focused member when clicking on a member card (to enable generation navigation)
+  const handleMemberFocus = (memberId) => {
+    setFocusedMemberId(memberId);
+  };
 
   function handleZoomIn() {
     const svg = d3.select(svgRef.current);
@@ -2422,40 +2509,42 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
 
   return (
     <div className="tree-canvas-wrapper" ref={containerRef}>
-      <div className="tree-filter-bar">
-        {/* View buttons - Tree (top-down) and Branch (left-to-right) */}
-        <div className="filter-toggle-group">
-          <button
-            className={`toggle-btn ${viewMode === VIEWS.TREE ? 'active' : ''}`}
-            onClick={() => setViewMode(VIEWS.TREE)}
-            title="Cây dọc (trên xuống)"
-          >
-            🌳 {t('filter_tree')}
-          </button>
-          <button
-            className={`toggle-btn ${viewMode === VIEWS.BRANCH ? 'active' : ''}`}
-            onClick={() => setViewMode(VIEWS.BRANCH)}
-            title="Cây ngang (trái sang phải)"
-          >
-            🌿 {t('filter_branch')}
-          </button>
+      {/* Generation Navigation Bar */}
+      {focusedMemberId && (fatherInfo || motherInfo) && (
+        <div className="generation-nav-bar">
+          <div className="gen-nav-current">
+            <span>📍 {focusedMemberName}</span>
+            <button className="btn btn-outline btn-sm" onClick={() => setFocusedMemberId(null)}>
+              ✕
+            </button>
+          </div>
+          <div className="gen-nav-parents">
+            <span className="gen-nav-label">⬆️ Thế hệ trước:</span>
+            {fatherInfo && (
+              <button
+                className="btn btn-outline btn-sm gen-nav-btn"
+                onClick={() => {
+                  console.log('Father button clicked:', fatherInfo.id, fatherInfo.name);
+                  navigateToParent(fatherInfo.id);
+                }}
+              >
+                👨 {fatherInfo.name}
+              </button>
+            )}
+            {motherInfo && (
+              <button
+                className="btn btn-outline btn-sm gen-nav-btn"
+                onClick={() => {
+                  console.log('Mother button clicked:', motherInfo.id, motherInfo.name);
+                  navigateToParent(motherInfo.id);
+                }}
+              >
+                👩 {motherInfo.name}
+              </button>
+            )}
+          </div>
         </div>
-
-        {/* Admin-only controls */}
-        {isAdmin && (
-          <select
-            value={activeFilter}
-            onChange={(e) => setActiveFilter(e.target.value)}
-            className="filter-select"
-          >
-            {Object.entries(FILTERS).map(([key, val]) => (
-              <option key={key} value={val}>
-                {t(`filter_${val}`)}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+      )}
 
       {viewRootId && viewRootName && (
         <div className="tree-root-banner">
@@ -2470,16 +2559,6 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         <div className="empty-tree"><span className="empty-icon">🌱</span><h3>Cây gia phả trống</h3><p>Thêm thành viên đầu tiên để bắt đầu!</p></div>
       )}
       <svg ref={svgRef} className="tree-svg" />
-
-      <div className="tree-zoom-controls">
-        <button className="zoom-btn" onClick={handleZoomIn} title="Phóng to">＋</button>
-        <button className="zoom-btn" onClick={handleZoomOut} title="Thu nhỏ">－</button>
-        <button className="zoom-btn zoom-fit" onClick={fitToScreen} title="Vừa màn hình">⊞</button>
-      </div>
-
-      <div className="canvas-controls">
-        <span>🖱️ Cuộn để phóng • Kéo để di chuyển • Di chuột vào thẻ để xem thao tác • 🔍 Khám phá tổ tiên ẩn</span>
-      </div>
     </div>
   );
 }

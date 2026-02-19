@@ -43,7 +43,7 @@ const scrollContainerStyle = {
   overscrollBehavior: 'contain',
 };
 
-function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChild, onDelete }) {
+function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChild, onDelete, parentInfo }) {
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
 
@@ -57,6 +57,49 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
     const parts = [m.lastName, m.middleName, m.vnName, m.firstName].filter(Boolean);
     return parts.join(' ');
   };
+
+  // Calculate parent IDs based on parentInfo
+  const getInitialParentIds = () => {
+    if (parentInfo && parentInfo.id) {
+      const parent = members.find(m => m._id === parentInfo.id);
+      if (parent) {
+        let fatherId = '';
+        let motherId = '';
+        if (parent.gender === 'male') {
+          fatherId = parent._id;
+          // Auto-fill mother from spouse
+          if (parent.spouses && parent.spouses.length > 0) {
+            const marriedSpouse = parent.spouses.find(sp => sp.status === 'married');
+            const spouseEntry = marriedSpouse || parent.spouses[0];
+            const spouseId = typeof spouseEntry.memberId === 'object'
+              ? spouseEntry.memberId._id
+              : spouseEntry.memberId;
+            if (spouseId) motherId = spouseId;
+          }
+        } else if (parent.gender === 'female') {
+          motherId = parent._id;
+          // Auto-fill father from spouse
+          if (parent.spouses && parent.spouses.length > 0) {
+            const marriedSpouse = parent.spouses.find(sp => sp.status === 'married');
+            const spouseEntry = marriedSpouse || parent.spouses[0];
+            const spouseId = typeof spouseEntry.memberId === 'object'
+              ? spouseEntry.memberId._id
+              : spouseEntry.memberId;
+            if (spouseId) fatherId = spouseId;
+          }
+        } else {
+          fatherId = parent._id;
+        }
+        return { fatherId, motherId };
+      }
+    }
+    return {
+      fatherId: resolveId(initialData?.fatherId),
+      motherId: resolveId(initialData?.motherId)
+    };
+  };
+
+  const initialParentIds = getInitialParentIds();
 
   const initSpouses = () => {
     if (initialData?.spouses && initialData.spouses.length > 0) {
@@ -97,8 +140,8 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
     occupation: initialData?.occupation || '',
     email: initialData?.email || '',
     phone: initialData?.phone || '',
-    fatherId: resolveId(initialData?.fatherId),
-    motherId: resolveId(initialData?.motherId),
+    fatherId: initialParentIds.fatherId,
+    motherId: initialParentIds.motherId,
     photo: initialData?.photo || '',
   });
 
@@ -190,8 +233,21 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
       const data = { ...form };
       if (!data.birthDate) delete data.birthDate;
       if (!data.deathDate) delete data.deathDate;
-      if (!data.fatherId) delete data.fatherId;
-      if (!data.motherId) delete data.motherId;
+
+      // For parent links, send null explicitly to remove the link (not delete the field)
+      // This tells the server to clear the parent link
+      if (initialData) {
+        // Only for editing existing members
+        // Handle '__pending__' as empty (user added parent row but didn't select)
+        const fatherValue = data.fatherId === '__pending__' ? '' : data.fatherId;
+        const motherValue = data.motherId === '__pending__' ? '' : data.motherId;
+        data.fatherId = fatherValue || null;
+        data.motherId = motherValue || null;
+      } else {
+        // For new members, just delete empty fields
+        if (!data.fatherId || data.fatherId === '__pending__') delete data.fatherId;
+        if (!data.motherId || data.motherId === '__pending__') delete data.motherId;
+      }
 
       const validSpouses = spouses.filter((sp) => sp.memberId);
       data.spouses = validSpouses;
@@ -233,7 +289,7 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
 
       {/* Scrollable Form Container */}
       <div style={scrollContainerStyle}>
-        <form id="member-form" onSubmit={handleSubmit}>
+        <form id="member-form" onSubmit={handleSubmit} autoComplete="off">
         <div className="form-section-label">{t('modal_photo')}</div>
         <div className="photo-upload-section">
           {photoPreview ? (
@@ -282,40 +338,60 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
             <label>{t('modal_last_name')} *</label>
             <input
               type="text"
-              name="lastName"
+              id="input-lastname"
               value={form.lastName}
-              onChange={handleChange}
+              onChange={(e) => setForm(prev => ({ ...prev, lastName: e.target.value }))}
               placeholder="Nguyễn"
+              autoComplete="nope"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              tabIndex={1}
             />
           </div>
           <div className="form-group">
             <label>{t('modal_middle_name')}</label>
             <input
               type="text"
-              name="middleName"
+              id="input-middlename"
               value={form.middleName}
-              onChange={handleChange}
+              onChange={(e) => setForm(prev => ({ ...prev, middleName: e.target.value }))}
               placeholder="Văn"
+              autoComplete="nope"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              tabIndex={2}
             />
           </div>
           <div className="form-group">
             <label>{t('modal_vn_name')} *</label>
             <input
               type="text"
-              name="vnName"
+              id="input-vnname"
               value={form.vnName}
-              onChange={handleChange}
+              onChange={(e) => setForm(prev => ({ ...prev, vnName: e.target.value }))}
               placeholder="Tên Việt"
+              autoComplete="nope"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              tabIndex={3}
             />
           </div>
           <div className="form-group">
             <label>{t('modal_first_name')} *</label>
             <input
               type="text"
-              name="firstName"
+              id="input-firstname"
               value={form.firstName}
-              onChange={handleChange}
+              onChange={(e) => setForm(prev => ({ ...prev, firstName: e.target.value }))}
               placeholder="An"
+              autoComplete="nope"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              tabIndex={4}
               autoFocus
             />
           </div>
@@ -393,21 +469,25 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
           <div className="form-group">
             <label>{t('modal_email')}</label>
             <input
-              type="email"
-              name="email"
+              type="text"
+              name="member-thudt"
               value={form.email}
-              onChange={handleChange}
+              onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
               placeholder="email@example.com"
+              autoComplete="off"
+              data-form-type="other"
             />
           </div>
           <div className="form-group">
             <label>{t('modal_phone')}</label>
             <input
-              type="tel"
-              name="phone"
+              type="text"
+              name="member-dienthoai"
               value={form.phone}
-              onChange={handleChange}
+              onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
               placeholder="+84 123 456 789"
+              autoComplete="off"
+              data-form-type="other"
             />
           </div>
         </div>
@@ -423,40 +503,91 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
           />
         </div>
 
-        <div className="form-section-label">{t('modal_family')}</div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>👨 {t('modal_father')}</label>
-            <select
-              name="fatherId"
-              value={form.fatherId}
-              onChange={handleChange}
+        <div className="form-section-label">
+          {t('modal_family')} - Cha Mẹ
+          {!form.fatherId && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ marginLeft: 12, fontSize: 11, padding: '2px 10px' }}
+              onClick={() => setForm(prev => ({ ...prev, fatherId: '__pending__' }))}
             >
-              <option value="">{t('modal_none')}</option>
-              {males.map((m) => (
-                <option key={m._id} value={m._id}>
-                  {formatMemberName(m)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>👩 {t('modal_mother')}</label>
-            <select
-              name="motherId"
-              value={form.motherId}
-              onChange={handleChange}
+              + Thêm Cha
+            </button>
+          )}
+          {!form.motherId && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ marginLeft: 8, fontSize: 11, padding: '2px 10px' }}
+              onClick={() => setForm(prev => ({ ...prev, motherId: '__pending__' }))}
             >
-              <option value="">{t('modal_none')}</option>
-              {females.map((m) => (
-                <option key={m._id} value={m._id}>
-                  {formatMemberName(m)}
-                </option>
-              ))}
-            </select>
-          </div>
+              + Thêm Mẹ
+            </button>
+          )}
         </div>
+
+        {!form.fatherId && !form.motherId && (
+          <p style={{ fontSize: 13, color: '#999', marginBottom: 12 }}>
+            Chưa có cha mẹ. Nhấn "+ Thêm Cha" hoặc "+ Thêm Mẹ" ở trên để thêm.
+          </p>
+        )}
+
+        {(form.fatherId) && (
+          <div className="form-row spouse-row">
+            <div className="form-group" style={{ flex: 1, position: 'relative' }}>
+              <label>👨 {t('modal_father')}</label>
+              <select
+                name="fatherId"
+                value={form.fatherId === '__pending__' ? '' : form.fatherId}
+                onChange={handleChange}
+              >
+                <option value="">-- Chọn --</option>
+                {males.map((m) => (
+                  <option key={m._id} value={m._id}>
+                    {formatMemberName(m)}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="spouse-remove-btn"
+                title="Xóa liên kết cha"
+                onClick={() => setForm(prev => ({ ...prev, fatherId: '' }))}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(form.motherId) && (
+          <div className="form-row spouse-row">
+            <div className="form-group" style={{ flex: 1, position: 'relative' }}>
+              <label>👩 {t('modal_mother')}</label>
+              <select
+                name="motherId"
+                value={form.motherId === '__pending__' ? '' : form.motherId}
+                onChange={handleChange}
+              >
+                <option value="">-- Chọn --</option>
+                {females.map((m) => (
+                  <option key={m._id} value={m._id}>
+                    {formatMemberName(m)}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="spouse-remove-btn"
+                title="Xóa liên kết mẹ"
+                onClick={() => setForm(prev => ({ ...prev, motherId: '' }))}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="form-section-label">
           Vợ/Chồng
@@ -562,10 +693,12 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
 
             {children.map((ch, idx) => {
               const usedChildIds = children.map((c) => c.memberId);
+              // Filter out members who already have parent links (fatherId or motherId)
               const availableChildren = members.filter(
                 (m) =>
                   m._id !== initialData?._id &&
-                  (m._id === ch.memberId || !usedChildIds.includes(m._id))
+                  (m._id === ch.memberId || !usedChildIds.includes(m._id)) &&
+                  (m._id === ch.memberId || (!m.fatherId && !m.motherId))
               );
               return (
                 <div className="form-row spouse-row" key={idx}>

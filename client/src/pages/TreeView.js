@@ -20,6 +20,7 @@ function TreeView() {
   const [editingMember, setEditingMember] = useState(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [viewMode, setViewMode] = useState('full'); // 'full' = Tree View, 'branch' = Branch View
   const fileInputRef = useRef(null);
 
   // Debug: log user role
@@ -28,7 +29,9 @@ function TreeView() {
   const loadTree = useCallback(async () => {
     try {
       const data = await getTree(treeId);
-      setTree(data);
+      console.log('TreeView - loadTree: received', data?.members?.length, 'members');
+      // Force new reference to trigger React re-render
+      setTree({ ...data, members: [...(data.members || [])] });
     } catch (err) {
       console.error('Không thể tải cây:', err);
       navigate('/');
@@ -203,6 +206,22 @@ function TreeView() {
         </div>
       </div>
 
+      {/* View Mode Toggle - 2x2 grid */}
+      <div className="view-toggle-bar">
+        <button
+          className={`toggle-btn ${viewMode === 'full' ? 'active' : ''}`}
+          onClick={() => setViewMode('full')}
+        >
+          🌳 Tree View
+        </button>
+        <button
+          className={`toggle-btn ${viewMode === 'branch' ? 'active' : ''}`}
+          onClick={() => setViewMode('branch')}
+        >
+          🌿 Branch View
+        </button>
+      </div>
+
       <div className="tree-container">
         <FamilyTreeCanvas
           members={tree?.members || []}
@@ -211,6 +230,9 @@ function TreeView() {
           onSelectMember={setSelectedMember}
           onAddChild={handleAddChild}
           isAdmin={isAdmin()}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          userLinkedMemberId={!isAdmin() ? user?.linkedMemberId : null}
         />
       </div>
 
@@ -230,6 +252,7 @@ function TreeView() {
         <MemberModal
           title={addParentInfo ? t('tree_add_child') : t('modal_add_member')}
           members={tree?.members || []}
+          parentInfo={addParentInfo}
           onSubmit={handleAddMember}
           onClose={() => {
             setShowAddModal(false);

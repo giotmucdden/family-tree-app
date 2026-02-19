@@ -37,11 +37,23 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   // Check if user can edit a specific member
-  // Admin can edit all, member can only edit themselves and downstream (children, grandchildren, etc.)
+  // Admin can edit all, member can only edit themselves, their spouses, and downstream (children, grandchildren, etc.)
   const canEditMember = useCallback((memberId, members) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
     if (!user.linkedMemberId) return false;
+
+    // Find the user's linked member to get their spouses
+    const linkedMember = members.find(m => m._id === user.linkedMemberId);
+
+    // Get spouse IDs
+    const spouseIds = new Set();
+    if (linkedMember?.spouses) {
+      linkedMember.spouses.forEach(sp => {
+        const spouseId = typeof sp.memberId === 'object' ? sp.memberId?._id : sp.memberId;
+        if (spouseId) spouseIds.add(spouseId);
+      });
+    }
 
     // Build a set of all downstream member IDs from user's linked member
     const getDownstreamIds = (startId) => {
@@ -66,7 +78,9 @@ export function AuthProvider({ children }) {
     };
 
     const editableIds = getDownstreamIds(user.linkedMemberId);
-    return editableIds.has(memberId);
+
+    // User can edit: themselves, their spouses, and downstream members
+    return editableIds.has(memberId) || spouseIds.has(memberId);
   }, [user]);
 
   return (
