@@ -1,1 +1,91 @@
-[{"_id":"6994a0a28dd9017677743ef0","email":"admin@giapha.app","password":"$2b$10$jVqULsPVbxt9LZ0..EOWSunOUKM7MkoFTi5lJHewLjtBXqTLdM5eC","username":"admin","displayName":"Quản Trị Viên","firstName":"Admin","lastName":"","familyTrees":["6994a12e735d9c5aad9ce8e0"],"isAdmin":true,"isApproved":true,"isReadOnly":false,"registrationDate":"2026-02-17T17:08:50.175Z","createdAt":"2026-02-17T17:08:50.176Z","updatedAt":"2026-02-18T17:20:59.071Z","__v":1,"lastLogin":"2026-02-17T20:22:14.890Z","role":"admin"},{"_id":"6994a0a28dd9017677743ef2","facebookId":"demo_user_001","email":"demo@familytree.app","displayName":"Demo User","firstName":"Demo","lastName":"User","profilePhoto":"","familyTrees":["6994a0a28dd9017677743ef6"],"isAdmin":false,"isApproved":true,"isReadOnly":false,"registrationDate":"2026-02-17T17:08:50.234Z","createdAt":"2026-02-17T17:08:50.234Z","updatedAt":"2026-02-17T17:08:50.448Z","__v":1},{"_id":"6994a0a28dd9017677743ef4","facebookId":"read_only_user_001","email":"viewer@familytree.app","displayName":"Khách Xem","firstName":"Khách","lastName":"Xem","profilePhoto":"","familyTrees":["6994a0a28dd9017677743ef6"],"isAdmin":false,"isApproved":true,"isReadOnly":true,"registrationDate":"2026-02-17T17:08:50.235Z","createdAt":"2026-02-17T17:08:50.235Z","updatedAt":"2026-02-17T17:08:50.237Z","__v":1},{"_id":"6995f4fbf54cb7b29ca04096","email":"trucnguyen1116@yahoo.com","password":"$2b$10$sDPsfzBftfT/eNe4veuMO.f4Iki/uXKaiFeYTduCtxRV.vu68o7nW","facebookId":"member_truc_001","displayName":"Nguyễn Chính Trực","firstName":"Trực","lastName":"Nguyễn Chính","role":"member","linkedMemberId":"6994c8c392a4d66da9309f3a","familyTrees":[],"createdAt":"2026-02-18T17:20:59.131Z","updatedAt":"2026-02-18T17:20:59.131Z","__v":0}]
+[
+  {
+    "_id": "6994a0a28dd9017677743ef0",
+    "email": "admin@giapha.app",
+    "password": "$2b$10$jVqULsPVbxt9LZ0..EOWSunOUKM7MkoFTi5lJHewLjtBXqTLdM5eC",
+    "username": "admin",
+    "displayName": "Quản Trị Viên",
+    "firstName": "Admin",
+    "lastName": "",
+    "familyTrees": [
+      "6994a12e735d9c5aad9ce8e0"
+    ],
+    "isAdmin": true,
+    "isApproved": true,
+    "isReadOnly": false,
+    "registrationDate": "2026-02-17T17:08:50.175Z",
+    "createdAt": "2026-02-17T17:08:50.176Z",
+    "updatedAt": "2026-02-18T17:20:59.071Z",
+    "__v": 1,
+    "lastLogin": "2026-02-17T20:22:14.890Z",
+    "role": "admin"
+  },
+  {
+    "_id": "6994a0a28dd9017677743ef2",
+    "facebookId": "demo_user_001",
+    "email": "demo@familytree.app",
+    "displayName": "Demo User",
+    "firstName": "Demo",
+    "lastName": "User",
+    "profilePhoto": "",
+    "familyTrees": [
+      "6994a0a28dd9017677743ef6"
+    ],
+    "isAdmin": false,
+    "isApproved": true,
+    "isReadOnly": false,
+    "registrationDate": "2026-02-17T17:08:50.234Z",
+    "createdAt": "2026-02-17T17:08:50.234Z",
+    "updatedAt": "2026-02-17T17:08:50.448Z",
+    "__v": 1
+  },
+  {
+    "_id": "6994a0a28dd9017677743ef4",
+    "facebookId": "read_only_user_001",
+    "email": "viewer@familytree.app",
+    "displayName": "Khách Xem",
+    "firstName": "Khách",
+    "lastName": "Xem",
+    "profilePhoto": "",
+    "familyTrees": [
+      "6994a0a28dd9017677743ef6"
+    ],
+    "isAdmin": false,
+    "isApproved": true,
+    "isReadOnly": true,
+    "registrationDate": "2026-02-17T17:08:50.235Z",
+    "createdAt": "2026-02-17T17:08:50.235Z",
+    "updatedAt": "2026-02-17T17:08:50.237Z",
+    "__v": 1
+  },
+  {
+    "_id": "6995f4fbf54cb7b29ca04096",
+    "email": "trucnguyen1116@yahoo.com",
+    "password": "$2b$10$sDPsfzBftfT/eNe4veuMO.f4Iki/uXKaiFeYTduCtxRV.vu68o7nW",
+    "facebookId": "member_truc_001",
+    "displayName": "Nguyễn Chính Trực",
+    "firstName": "Trực",
+    "lastName": "Nguyễn Chính",
+    "role": "member",
+    "linkedMemberId": "6994c8c392a4d66da9309f3a",
+    "familyTrees": [],
+    "createdAt": "2026-02-18T17:20:59.131Z",
+    "updatedAt": "2026-02-18T17:20:59.131Z",
+    "__v": 0
+  },
+  {
+    "_id": "699634f7355918af527cc718",
+    "email": "sinh.ngoc10@gmail.com",
+    "password": "$2b$10$XX8eRDUlZYNTVxxEPmBCXe6SBjuB1tm1YP59kDdwZlab.j4ZTSx7m",
+    "facebookId": "member_sinh_001",
+    "displayName": "Sinh Ngọc",
+    "firstName": "Sinh",
+    "lastName": "Ngọc",
+    "role": "member",
+    "linkedMemberId": "6996076cf247b9141afdb56e",
+    "familyTrees": [],
+    "createdAt": "2026-02-18T21:53:59.294Z",
+    "updatedAt": "2026-02-18T21:54:18.111Z",
+    "__v": 0
+  }
+]
