@@ -116,6 +116,50 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
+// Create user endpoint for admin use
+app.post('/api/create-user', async (req, res) => {
+  const { secret, email, password, name, role, linkedMemberId, familyTrees } = req.body;
+
+  if (secret !== 'migrate-fam-tree-2024') {
+    return res.status(403).json({ error: 'Invalid secret' });
+  }
+
+  try {
+    const bcrypt = require('bcryptjs');
+    const mongoose = require('mongoose');
+    const User = require('./models/User');
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user directly to bypass pre-save hook
+    const userData = {
+      _id: new mongoose.Types.ObjectId(),
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      name: name || email.split('@')[0],
+      role: role || 'member',
+      facebookId: `local_${Date.now()}`,
+      linkedMemberId: linkedMemberId ? new mongoose.Types.ObjectId(linkedMemberId) : null,
+      familyTrees: (familyTrees || []).map(t => new mongoose.Types.ObjectId(t)),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await User.collection.insertOne(userData);
+    res.json({ success: true, message: `User ${email} created`, userId: userData._id });
+  } catch (err) {
+    console.error('Create user error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Migration endpoint - runs within Railway network to access internal MongoDB
 app.post('/api/migrate', async (req, res) => {
   const { secret } = req.body;
