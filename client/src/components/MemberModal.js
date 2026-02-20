@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Modal from 'react-modal';
 import { useLanguage } from '../context/LanguageContext';
+import SearchableSelect from './SearchableSelect';
 
 Modal.setAppElement('#root');
 
@@ -537,18 +538,12 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
           <div className="form-row spouse-row">
             <div className="form-group" style={{ flex: 1, position: 'relative' }}>
               <label>👨 {t('modal_father')}</label>
-              <select
-                name="fatherId"
+              <SearchableSelect
+                options={males.map(m => ({ value: m._id, label: formatMemberName(m) }))}
                 value={form.fatherId === '__pending__' ? '' : form.fatherId}
-                onChange={handleChange}
-              >
-                <option value="">-- Chọn --</option>
-                {males.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {formatMemberName(m)}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setForm(prev => ({ ...prev, fatherId: value }))}
+                placeholder="-- Chọn Cha --"
+              />
               <button
                 type="button"
                 className="spouse-remove-btn"
@@ -565,18 +560,12 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
           <div className="form-row spouse-row">
             <div className="form-group" style={{ flex: 1, position: 'relative' }}>
               <label>👩 {t('modal_mother')}</label>
-              <select
-                name="motherId"
+              <SearchableSelect
+                options={females.map(m => ({ value: m._id, label: formatMemberName(m) }))}
                 value={form.motherId === '__pending__' ? '' : form.motherId}
-                onChange={handleChange}
-              >
-                <option value="">-- Chọn --</option>
-                {females.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {formatMemberName(m)}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setForm(prev => ({ ...prev, motherId: value }))}
+                placeholder="-- Chọn Mẹ --"
+              />
               <button
                 type="button"
                 className="spouse-remove-btn"
@@ -607,59 +596,48 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
           </p>
         )}
 
-        {spouses.map((sp, idx) => (
-          <div className="form-row spouse-row" key={idx}>
-            <div className="form-group">
-              <label>❤️ Vợ/Chồng {idx + 1}</label>
-              <select
-                value={sp.memberId}
-                onChange={(e) =>
-                  handleSpouseChange(idx, 'memberId', e.target.value)
-                }
-              >
-                <option value="">-- Chọn --</option>
-                {potentialSpouses
-                  .filter(
-                    (m) =>
-                      m._id === sp.memberId ||
-                      !usedSpouseIds.includes(m._id)
-                  )
-                  .map((m) => (
-                    <option key={m._id} value={m._id}>
-                      {formatMemberName(m)} (
-                      {m.gender === 'male'
-                        ? '♂'
-                        : m.gender === 'female'
-                        ? '♀'
-                        : '⚬'}
-                      )
-                    </option>
-                  ))}
-              </select>
+        {spouses.map((sp, idx) => {
+          const availableSpouses = potentialSpouses.filter(
+            (m) => m._id === sp.memberId || !usedSpouseIds.includes(m._id)
+          );
+          return (
+            <div className="form-row spouse-row" key={idx}>
+              <div className="form-group">
+                <label>❤️ Vợ/Chồng {idx + 1}</label>
+                <SearchableSelect
+                  options={availableSpouses.map(m => ({
+                    value: m._id,
+                    label: `${formatMemberName(m)} (${m.gender === 'male' ? '♂' : m.gender === 'female' ? '♀' : '⚬'})`
+                  }))}
+                  value={sp.memberId}
+                  onChange={(value) => handleSpouseChange(idx, 'memberId', value)}
+                  placeholder="-- Chọn --"
+                />
+              </div>
+              <div className="form-group" style={{ position: 'relative' }}>
+                <label>Tình trạng</label>
+                <select
+                  value={sp.status}
+                  onChange={(e) =>
+                    handleSpouseChange(idx, 'status', e.target.value)
+                  }
+                >
+                  <option value="married">💚 Kết hôn</option>
+                  <option value="divorced">⚡ Ly hôn</option>
+                  <option value="widowed">🕊️ Góa</option>
+                </select>
+                <button
+                  type="button"
+                  className="spouse-remove-btn"
+                  title="Xóa vợ/chồng"
+                  onClick={() => removeSpouseRow(idx)}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <div className="form-group" style={{ position: 'relative' }}>
-              <label>Tình trạng</label>
-              <select
-                value={sp.status}
-                onChange={(e) =>
-                  handleSpouseChange(idx, 'status', e.target.value)
-                }
-              >
-                <option value="married">💚 Kết hôn</option>
-                <option value="divorced">⚡ Ly hôn</option>
-                <option value="widowed">🕊️ Góa</option>
-              </select>
-              <button
-                type="button"
-                className="spouse-remove-btn"
-                title="Xóa vợ/chồng"
-                onClick={() => removeSpouseRow(idx)}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {initialData && (
           <>
@@ -704,23 +682,15 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
                 <div className="form-row spouse-row" key={idx}>
                   <div className="form-group" style={{ flex: 1, position: 'relative' }}>
                     <label>👶 Con {idx + 1}</label>
-                    <select
+                    <SearchableSelect
+                      options={availableChildren.map(m => ({
+                        value: m._id,
+                        label: `${formatMemberName(m)} (${m.gender === 'male' ? '♂' : m.gender === 'female' ? '♀' : '⚬'})`
+                      }))}
                       value={ch.memberId}
-                      onChange={(e) => handleChildChange(idx, e.target.value)}
-                    >
-                      <option value="">-- Chọn thành viên --</option>
-                      {availableChildren.map((m) => (
-                        <option key={m._id} value={m._id}>
-                          {formatMemberName(m)} (
-                          {m.gender === 'male'
-                            ? '♂'
-                            : m.gender === 'female'
-                            ? '♀'
-                            : '⚬'}
-                          )
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleChildChange(idx, value)}
+                      placeholder="-- Chọn thành viên --"
+                    />
                     <button
                       type="button"
                       className="spouse-remove-btn"

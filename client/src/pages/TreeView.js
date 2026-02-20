@@ -4,6 +4,7 @@ import { getTree, addMember, updateMember, deleteMember, createBranchTree, expor
 import FamilyTreeCanvas from '../components/FamilyTreeCanvas';
 import MemberModal from '../components/MemberModal';
 import MemberBottomBar from '../components/MemberBottomBar';
+import RelationshipPopup from '../components/RelationshipPopup';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,7 +22,35 @@ function TreeView() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [viewMode, setViewMode] = useState('full'); // 'full' = Tree View, 'branch' = Branch View
+  const [relationshipMode, setRelationshipMode] = useState(false); // Vai Vế mode
+  const [relationshipMembers, setRelationshipMembers] = useState([]); // Selected members for comparison
   const fileInputRef = useRef(null);
+
+  // Helper to format member name
+  const formatMemberName = (m) => {
+    if (!m) return '';
+    const parts = [m.lastName, m.middleName, m.vnName, m.firstName].filter(Boolean);
+    return parts.join(' ');
+  };
+
+  // Handle member selection in relationship mode
+  const handleMemberSelect = useCallback((member) => {
+    if (relationshipMode && member) {
+      setRelationshipMembers(prev => {
+        if (prev.length === 0) {
+          return [member];
+        } else if (prev.length === 1 && prev[0]._id !== member._id) {
+          return [prev[0], member];
+        } else if (prev.length === 2) {
+          // When 2 members are already selected, clicking starts a new comparison
+          return [member];
+        }
+        return prev;
+      });
+    } else {
+      setSelectedMember(member);
+    }
+  }, [relationshipMode]);
 
   // Debug: log user role
   console.log('TreeView - User:', user?.email, 'Role:', user?.role, 'isAdmin():', isAdmin());
@@ -210,29 +239,93 @@ function TreeView() {
       <div className="view-toggle-bar">
         <button
           className={`toggle-btn ${viewMode === 'full' ? 'active' : ''}`}
-          onClick={() => setViewMode('full')}
+          onClick={() => { setViewMode('full'); setRelationshipMode(false); }}
         >
           🌳 Tree View
         </button>
         <button
           className={`toggle-btn ${viewMode === 'branch' ? 'active' : ''}`}
-          onClick={() => setViewMode('branch')}
+          onClick={() => { setViewMode('branch'); setRelationshipMode(false); }}
         >
           🌿 Branch View
         </button>
+        {isAdmin() && (
+          <button
+            className={`toggle-btn ${relationshipMode ? 'active' : ''}`}
+            onClick={() => {
+              const newMode = !relationshipMode;
+              setRelationshipMode(newMode);
+              setRelationshipMembers([]);
+              if (newMode) {
+                setSelectedMember(null); // Close bottom bar when activating Vai Vế
+              }
+            }}
+          >
+            👥 Vai Vế
+          </button>
+        )}
       </div>
+
+      {/* Relationship Mode Instructions */}
+      {relationshipMode && (
+        <div className="relationship-instruction">
+          {relationshipMembers.length === 0 && (
+            <>
+              <div className="relationship-slot empty">
+                <span className="slot-placeholder">👆 Chọn người 1</span>
+              </div>
+              <div className="relationship-slot-divider">❓</div>
+              <div className="relationship-slot empty">
+                <span className="slot-placeholder">👆 Chọn người 2</span>
+              </div>
+            </>
+          )}
+          {relationshipMembers.length === 1 && (
+            <>
+              <div className="relationship-slot filled">
+                <div className="slot-photo">
+                  {relationshipMembers[0]?.photo ? (
+                    <img src={relationshipMembers[0].photo} alt="" />
+                  ) : (
+                    <span>{relationshipMembers[0]?.gender === 'male' ? '👨' : relationshipMembers[0]?.gender === 'female' ? '👩' : '👤'}</span>
+                  )}
+                </div>
+                <div className="slot-info">
+                  <span className="slot-name">{formatMemberName(relationshipMembers[0])}</span>
+                  <span className="slot-details">
+                    {relationshipMembers[0]?.gender === 'male' ? '♂ Nam' : relationshipMembers[0]?.gender === 'female' ? '♀ Nữ' : '⚬'}
+                  </span>
+                </div>
+              </div>
+              <div className="relationship-slot-divider">❓</div>
+              <div className="relationship-slot empty">
+                <span className="slot-placeholder">👆 Chọn người 2</span>
+              </div>
+            </>
+          )}
+          {relationshipMembers.length === 2 && (
+            <RelationshipPopup
+              member1={relationshipMembers[0]}
+              member2={relationshipMembers[1]}
+              allMembers={tree?.members || []}
+            />
+          )}
+        </div>
+      )}
 
       <div className="tree-container">
         <FamilyTreeCanvas
           members={tree?.members || []}
           treeId={treeId}
           treeRootId={tree?.rootMember}
-          onSelectMember={setSelectedMember}
+          onSelectMember={relationshipMode ? handleMemberSelect : setSelectedMember}
           onAddChild={handleAddChild}
           isAdmin={isAdmin()}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           userLinkedMemberId={!isAdmin() ? user?.linkedMemberId : null}
+          relationshipMode={relationshipMode}
+          relationshipMembers={relationshipMembers}
         />
       </div>
 

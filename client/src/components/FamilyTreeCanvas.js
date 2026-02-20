@@ -15,7 +15,7 @@ const FILTERS = { ALL: 'all', LIVING: 'living', DECEASED: 'deceased', DIVORCED: 
 const VIEWS = { TREE: 'tree', BRANCH: 'branch' }; // TREE = top-down, BRANCH = left-to-right
 const D3_LAYOUTS = { TIDY: 'tidy' }; // Only tidy layout used now
 
-function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false, viewMode, onViewModeChange, userLinkedMemberId }) {
+function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false, viewMode, onViewModeChange, userLinkedMemberId, relationshipMode = false, relationshipMembers = [] }) {
   const { t } = useLanguage();
   const svgRef = useRef(null);
   const containerRef = useRef(null);
@@ -2032,7 +2032,14 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
           .attr('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))')
           .attr('opacity', isVisible(p) ? 1 : 0.3)
           .style('cursor', 'pointer')
-          .on('click', (e) => { e.stopPropagation(); highlightUpstream(mem.id); setFocusedMemberId(mem.id); if (onSelectMemberRef.current) onSelectMemberRef.current(lookup[mem.id]); });
+          .on('click', (e) => {
+            e.stopPropagation();
+            if (!relationshipMode) {
+              highlightUpstream(mem.id);
+              setFocusedMemberId(mem.id);
+            }
+            if (onSelectMemberRef.current) onSelectMemberRef.current(lookup[mem.id]);
+          });
 
         // Connection line + relationship emoji between adjacent cards
         if (i > 0) {
@@ -2225,7 +2232,14 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       .attr('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))')
       .attr('opacity', (d) => (isVisible(d.data) ? 1 : 0.3))
       .style('cursor', 'pointer')
-      .on('click', (e, d) => { e.stopPropagation(); highlightUpstream(d.data._id); setFocusedMemberId(d.data._id); if (onSelectMemberRef.current) onSelectMemberRef.current(d.data); });
+      .on('click', (e, d) => {
+        e.stopPropagation();
+        if (!relationshipMode) {
+          highlightUpstream(d.data._id);
+          setFocusedMemberId(d.data._id);
+        }
+        if (onSelectMemberRef.current) onSelectMemberRef.current(d.data);
+      });
 
     nodes.filter((d) => isCurrentRoot(d.data._id) && viewRootId)
       .append('text')
@@ -2391,44 +2405,49 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     });
 
     // ── Legend ────────────────────────────────────────────
-    const legend = svg.append('g').attr('transform', 'translate(14,14)');
-    const legendItems = [
-      { type: 'group', label: 'Kết hôn / Góa' },
-      { type: 'deceased', label: 'Đã mất (xám)' },
-      { type: 'divorced', label: 'Ly hôn (tách)' },
-      { type: 'explore', label: 'Khám phá nhánh ẩn' },
-    ];
-    const lW = 180;
-    const lH = legendItems.length * 22 + 14;
-    legend.append('rect').attr('width', lW).attr('height', lH).attr('rx', 6)
-      .attr('fill', 'rgba(255,255,255,.92)').attr('stroke', '#e0e0e0');
+    // Hide legend when in relationship mode
+    if (!relationshipMode) {
+      const legend = svg.append('g')
+        .attr('class', 'legend-box')
+        .attr('transform', 'translate(14,14)');
+      const legendItems = [
+        { type: 'group', label: 'Kết hôn / Góa' },
+        { type: 'deceased', label: 'Đã mất (xám)' },
+        { type: 'divorced', label: 'Ly hôn (tách)' },
+        { type: 'explore', label: 'Khám phá nhánh ẩn' },
+      ];
+      const lW = 180;
+      const lH = legendItems.length * 22 + 14;
+      legend.append('rect').attr('width', lW).attr('height', lH).attr('rx', 6)
+        .attr('fill', 'rgba(255,255,255,.92)').attr('stroke', '#e0e0e0');
 
-    legendItems.forEach((it, i) => {
-      const y = i * 22 + 14;
-      if (it.type === 'group') {
-        legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 36).attr('height', 12).attr('rx', 3)
-          .attr('fill', '#e3f2fd').attr('stroke', '#9e9e9e').attr('stroke-width', 1);
-        legend.append('line').attr('x1', 20).attr('y1', y - 6).attr('x2', 20).attr('y2', y + 6)
-          .attr('stroke', '#bdbdbd').attr('stroke-width', 0.5);
-        legend.append('line').attr('x1', 32).attr('y1', y - 6).attr('x2', 32).attr('y2', y + 6)
-          .attr('stroke', '#bdbdbd').attr('stroke-width', 0.5);
-        legend.append('text').attr('x', 20).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('❤️');
-        legend.append('text').attr('x', 32).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('🕊️');
-      } else if (it.type === 'deceased') {
-        legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 36).attr('height', 12).attr('rx', 3)
-          .attr('fill', '#cfd8dc').attr('stroke', '#90a4ae').attr('stroke-width', 1).attr('opacity', 0.6);
-        legend.append('text').attr('x', 26).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('🪦');
-      } else if (it.type === 'divorced') {
-        legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 14).attr('height', 12).attr('rx', 3)
-          .attr('fill', '#fce4ec').attr('stroke', '#e65100').attr('stroke-width', 1);
-        legend.append('line').attr('x1', 24).attr('y1', y).attr('x2', 38).attr('y2', y)
-          .attr('stroke', '#e65100').attr('stroke-width', 1.5).attr('stroke-dasharray', '3,3');
-        legend.append('text').attr('x', 31).attr('y', y - 4).attr('text-anchor', 'middle').attr('font-size', '7px').text('💔');
-      } else if (it.type === 'explore') {
-        legend.append('text').attr('x', 26).attr('y', y + 2).attr('text-anchor', 'middle').attr('font-size', '12px').text('🔍');
-      }
-      legend.append('text').attr('x', 50).attr('y', y + 3).attr('font-size', '9px').attr('fill', '#424242').text(it.label);
-    });
+      legendItems.forEach((it, i) => {
+        const y = i * 22 + 14;
+        if (it.type === 'group') {
+          legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 36).attr('height', 12).attr('rx', 3)
+            .attr('fill', '#e3f2fd').attr('stroke', '#9e9e9e').attr('stroke-width', 1);
+          legend.append('line').attr('x1', 20).attr('y1', y - 6).attr('x2', 20).attr('y2', y + 6)
+            .attr('stroke', '#bdbdbd').attr('stroke-width', 0.5);
+          legend.append('line').attr('x1', 32).attr('y1', y - 6).attr('x2', 32).attr('y2', y + 6)
+            .attr('stroke', '#bdbdbd').attr('stroke-width', 0.5);
+          legend.append('text').attr('x', 20).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('❤️');
+          legend.append('text').attr('x', 32).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('🕊️');
+        } else if (it.type === 'deceased') {
+          legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 36).attr('height', 12).attr('rx', 3)
+            .attr('fill', '#cfd8dc').attr('stroke', '#90a4ae').attr('stroke-width', 1).attr('opacity', 0.6);
+          legend.append('text').attr('x', 26).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('🪦');
+        } else if (it.type === 'divorced') {
+          legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 14).attr('height', 12).attr('rx', 3)
+            .attr('fill', '#fce4ec').attr('stroke', '#e65100').attr('stroke-width', 1);
+          legend.append('line').attr('x1', 24).attr('y1', y).attr('x2', 38).attr('y2', y)
+            .attr('stroke', '#e65100').attr('stroke-width', 1.5).attr('stroke-dasharray', '3,3');
+          legend.append('text').attr('x', 31).attr('y', y - 4).attr('text-anchor', 'middle').attr('font-size', '7px').text('💔');
+        } else if (it.type === 'explore') {
+          legend.append('text').attr('x', 26).attr('y', y + 2).attr('text-anchor', 'middle').attr('font-size', '12px').text('🔍');
+        }
+        legend.append('text').attr('x', 50).attr('y', y + 3).attr('font-size', '9px').attr('fill', '#424242').text(it.label);
+      });
+    }
 
     // ── Auto-fit ─────────────────────────────────────────
     requestAnimationFrame(() => {
@@ -2445,7 +2464,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
     });
 
-  }, [members, treeId, activeFilter, viewRootId, effectiveViewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin]);
+  }, [members, treeId, activeFilter, viewRootId, effectiveViewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin, relationshipMode]);
 
   const viewRootName = (() => {
     if (!viewRootId || !members) return null;
@@ -2509,42 +2528,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
 
   return (
     <div className="tree-canvas-wrapper" ref={containerRef}>
-      {/* Generation Navigation Bar */}
-      {focusedMemberId && (fatherInfo || motherInfo) && (
-        <div className="generation-nav-bar">
-          <div className="gen-nav-current">
-            <span>📍 {focusedMemberName}</span>
-            <button className="btn btn-outline btn-sm" onClick={() => setFocusedMemberId(null)}>
-              ✕
-            </button>
-          </div>
-          <div className="gen-nav-parents">
-            <span className="gen-nav-label">⬆️ Thế hệ trước:</span>
-            {fatherInfo && (
-              <button
-                className="btn btn-outline btn-sm gen-nav-btn"
-                onClick={() => {
-                  console.log('Father button clicked:', fatherInfo.id, fatherInfo.name);
-                  navigateToParent(fatherInfo.id);
-                }}
-              >
-                👨 {fatherInfo.name}
-              </button>
-            )}
-            {motherInfo && (
-              <button
-                className="btn btn-outline btn-sm gen-nav-btn"
-                onClick={() => {
-                  console.log('Mother button clicked:', motherInfo.id, motherInfo.name);
-                  navigateToParent(motherInfo.id);
-                }}
-              >
-                👩 {motherInfo.name}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Tree root banner for member users */}
 
       {viewRootId && viewRootName && (
         <div className="tree-root-banner">
