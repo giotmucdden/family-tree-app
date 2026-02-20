@@ -265,4 +265,102 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// ============ ADMIN ROUTES ============
+
+// Middleware kiểm tra admin
+const ensureAdmin = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Chưa đăng nhập' });
+  }
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Chỉ admin mới có quyền truy cập' });
+  }
+  next();
+};
+
+// @route  GET /api/auth/admin/pending-users
+// @desc   Get users waiting for approval (for now, returns empty - all users are auto-approved)
+router.get('/admin/pending-users', ensureAdmin, async (req, res) => {
+  try {
+    // Currently no approval system, return empty array
+    res.json([]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// @route  GET /api/auth/admin/all-users
+// @desc   Get all users
+router.get('/admin/all-users', ensureAdmin, async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .sort({ createdAt: -1 });
+
+    const formattedUsers = users.map(u => ({
+      _id: u._id,
+      displayName: u.displayName,
+      email: u.email,
+      username: u.email?.split('@')[0] || 'unknown',
+      isAdmin: u.role === 'admin',
+      isApproved: true, // All users are currently auto-approved
+      registrationDate: u.createdAt,
+      createdAt: u.createdAt,
+      lastLogin: u.updatedAt,
+    }));
+
+    res.json(formattedUsers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// @route  POST /api/auth/admin/approve/:userId
+// @desc   Approve a user (placeholder for future use)
+router.post('/admin/approve/:userId', ensureAdmin, async (req, res) => {
+  try {
+    // Currently no approval system
+    res.json({ success: true, message: 'User approved' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// @route  DELETE /api/auth/admin/reject/:userId
+// @desc   Reject and delete a user
+router.delete('/admin/reject/:userId', ensureAdmin, async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+    }
+    res.json({ success: true, message: 'Đã xóa người dùng' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// @route  POST /api/auth/admin/toggle-admin/:userId
+// @desc   Toggle admin role for a user
+router.post('/admin/toggle-admin/:userId', ensureAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+    }
+
+    // Toggle role
+    user.role = user.role === 'admin' ? 'member' : 'admin';
+    await user.save();
+
+    res.json({
+      success: true,
+      message: user.role === 'admin' ? 'Đã cấp quyền Admin' : 'Đã thu hồi quyền Admin',
+      isAdmin: user.role === 'admin'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

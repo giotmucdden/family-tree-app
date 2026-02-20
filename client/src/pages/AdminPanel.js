@@ -2,8 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// Error type labels
+const ERROR_TYPE_LABELS = {
+  wrong_title: 'Sai danh xưng',
+  wrong_region_bac: 'Sai miền Bắc',
+  wrong_region_trung: 'Sai miền Trung',
+  wrong_region_nam: 'Sai miền Nam',
+  wrong_lineage: 'Sai họ nội/ngoại',
+  wrong_generation: 'Sai thế hệ',
+  other: 'Lỗi khác',
+};
+
+const STATUS_LABELS = {
+  pending: { label: '⏳ Chờ xử lý', color: '#ff9800' },
+  reviewed: { label: '👁️ Đã xem', color: '#2196f3' },
+  fixed: { label: '✅ Đã sửa', color: '#4caf50' },
+  rejected: { label: '❌ Từ chối', color: '#f44336' },
+};
+
 function AdminPanel() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [pendingUsers, setPendingUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -11,13 +29,105 @@ function AdminPanel() {
   const [activeTab, setActiveTab] = useState('pending');
   const [actionLoading, setActionLoading] = useState(null);
 
+  // Vai Ve Reports state
+  const [vaiVeReports, setVaiVeReports] = useState([]);
+  const [vaiVeStats, setVaiVeStats] = useState({ pending: 0, reviewed: 0, fixed: 0, rejected: 0, total: 0 });
+  const [vaiVeFilter, setVaiVeFilter] = useState('pending');
+  const [vaiVeLoading, setVaiVeLoading] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+
   useEffect(() => {
-    if (!user?.isAdmin) {
+    if (!isAdmin()) {
       navigate('/');
       return;
     }
     loadUsers();
-  }, [user, navigate]);
+  }, [user, navigate, isAdmin]);
+
+  // Load Vai Ve Reports when tab changes
+  useEffect(() => {
+    if (activeTab === 'vaive') {
+      loadVaiVeReports();
+      loadVaiVeStats();
+    }
+  }, [activeTab, vaiVeFilter]);
+
+  async function loadVaiVeReports() {
+    setVaiVeLoading(true);
+    try {
+      const res = await fetch(`/api/vaive-reports/admin/all?status=${vaiVeFilter}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setVaiVeReports(data.reports || []);
+      }
+    } catch (err) {
+      console.error('Không thể tải báo cáo Vai Vế:', err);
+    } finally {
+      setVaiVeLoading(false);
+    }
+  }
+
+  async function loadVaiVeStats() {
+    try {
+      const res = await fetch('/api/vaive-reports/admin/stats', {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setVaiVeStats(data);
+      }
+    } catch (err) {
+      console.error('Không thể tải thống kê:', err);
+    }
+  }
+
+  async function handleUpdateReportStatus(reportId, newStatus) {
+    setActionLoading(reportId);
+    try {
+      const res = await fetch(`/api/vaive-reports/admin/${reportId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        await loadVaiVeReports();
+        await loadVaiVeStats();
+        setSelectedReport(null);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Cập nhật thất bại');
+      }
+    } catch (err) {
+      alert('Cập nhật thất bại');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleDeleteReport(reportId) {
+    if (!window.confirm('Xóa báo cáo này?')) return;
+    setActionLoading(reportId);
+    try {
+      const res = await fetch(`/api/vaive-reports/admin/${reportId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        await loadVaiVeReports();
+        await loadVaiVeStats();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Xóa thất bại');
+      }
+    } catch (err) {
+      alert('Xóa thất bại');
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   async function loadUsers() {
     setLoading(true);
@@ -100,7 +210,7 @@ function AdminPanel() {
     }
   }
 
-  if (!user?.isAdmin) {
+  if (!isAdmin()) {
     return null;
   }
 
@@ -133,6 +243,12 @@ function AdminPanel() {
           onClick={() => setActiveTab('all')}
         >
           👥 Tất Cả Người Dùng ({allUsers.length})
+        </button>
+        <button
+          className={`admin-tab ${activeTab === 'vaive' ? 'active' : ''}`}
+          onClick={() => setActiveTab('vaive')}
+        >
+          📝 Báo Cáo Vai Vế ({vaiVeStats.pending > 0 ? `${vaiVeStats.pending} mới` : vaiVeStats.total})
         </button>
       </div>
 
@@ -236,6 +352,161 @@ function AdminPanel() {
                         </button>
                       </>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: Báo cáo Vai Vế */}
+      {activeTab === 'vaive' && (
+        <div className="admin-section">
+          <h2>📝 Báo Cáo Vai Vế</h2>
+
+          {/* Stats */}
+          <div className="vaive-stats">
+            <div className="stat-item pending">
+              <span className="stat-number">{vaiVeStats.pending}</span>
+              <span className="stat-label">Chờ xử lý</span>
+            </div>
+            <div className="stat-item reviewed">
+              <span className="stat-number">{vaiVeStats.reviewed}</span>
+              <span className="stat-label">Đã xem</span>
+            </div>
+            <div className="stat-item fixed">
+              <span className="stat-number">{vaiVeStats.fixed}</span>
+              <span className="stat-label">Đã sửa</span>
+            </div>
+            <div className="stat-item rejected">
+              <span className="stat-number">{vaiVeStats.rejected}</span>
+              <span className="stat-label">Từ chối</span>
+            </div>
+          </div>
+
+          {/* Filter */}
+          <div className="vaive-filter">
+            <label>Lọc theo trạng thái:</label>
+            <select value={vaiVeFilter} onChange={e => setVaiVeFilter(e.target.value)}>
+              <option value="all">Tất cả</option>
+              <option value="pending">Chờ xử lý</option>
+              <option value="reviewed">Đã xem</option>
+              <option value="fixed">Đã sửa</option>
+              <option value="rejected">Từ chối</option>
+            </select>
+          </div>
+
+          {/* Report List */}
+          {vaiVeLoading ? (
+            <div className="loading-screen">
+              <div className="spinner" />
+            </div>
+          ) : vaiVeReports.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon">📝</span>
+              <p>Không có báo cáo nào</p>
+            </div>
+          ) : (
+            <div className="vaive-report-list">
+              {vaiVeReports.map(report => (
+                <div key={report._id} className="vaive-report-card">
+                  <div className="report-header">
+                    <span className="report-status" style={{ color: STATUS_LABELS[report.status]?.color }}>
+                      {STATUS_LABELS[report.status]?.label}
+                    </span>
+                    <span className="report-date">
+                      {new Date(report.createdAt).toLocaleDateString('vi-VN', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="report-members">
+                    <span><strong>{report.member1?.name}</strong> ↔ <strong>{report.member2?.name}</strong></span>
+                  </div>
+
+                  <div className="report-system-result">
+                    <div>Hệ thống: {report.systemResult?.title1to2} ↔ {report.systemResult?.title2to1}</div>
+                    {report.systemResult?.bac && <small>Bắc: {report.systemResult.bac}</small>}
+                    {report.systemResult?.trung && <small>Trung: {report.systemResult.trung}</small>}
+                    {report.systemResult?.nam && <small>Nam: {report.systemResult.nam}</small>}
+                  </div>
+
+                  <div className="report-error-types">
+                    {report.errorTypes?.map(et => (
+                      <span key={et} className="error-tag">{ERROR_TYPE_LABELS[et] || et}</span>
+                    ))}
+                  </div>
+
+                  {report.suggestedCorrection?.title1to2 && (
+                    <div className="report-suggestion">
+                      <strong>Đề xuất:</strong> {report.suggestedCorrection.title1to2} ↔ {report.suggestedCorrection.title2to1}
+                    </div>
+                  )}
+
+                  {report.description && (
+                    <div className="report-description">
+                      <em>"{report.description}"</em>
+                    </div>
+                  )}
+
+                  <div className="report-reporter">
+                    Báo cáo bởi: {report.reportedBy?.displayName || 'Unknown'}
+                  </div>
+
+                  <div className="report-actions">
+                    {report.status === 'pending' && (
+                      <>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleUpdateReportStatus(report._id, 'reviewed')}
+                          disabled={actionLoading === report._id}
+                        >
+                          👁️ Đánh dấu đã xem
+                        </button>
+                        <button
+                          className="btn btn-sm btn-success"
+                          onClick={() => handleUpdateReportStatus(report._id, 'fixed')}
+                          disabled={actionLoading === report._id}
+                        >
+                          ✅ Đã sửa
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleUpdateReportStatus(report._id, 'rejected')}
+                          disabled={actionLoading === report._id}
+                        >
+                          ❌ Từ chối
+                        </button>
+                      </>
+                    )}
+                    {report.status === 'reviewed' && (
+                      <>
+                        <button
+                          className="btn btn-sm btn-success"
+                          onClick={() => handleUpdateReportStatus(report._id, 'fixed')}
+                          disabled={actionLoading === report._id}
+                        >
+                          ✅ Đã sửa
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleUpdateReportStatus(report._id, 'rejected')}
+                          disabled={actionLoading === report._id}
+                        >
+                          ❌ Từ chối
+                        </button>
+                      </>
+                    )}
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDeleteReport(report._id)}
+                      disabled={actionLoading === report._id}
+                    >
+                      🗑️ Xóa
+                    </button>
                   </div>
                 </div>
               ))}

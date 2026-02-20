@@ -308,6 +308,7 @@ function TreeView() {
               member1={relationshipMembers[0]}
               member2={relationshipMembers[1]}
               allMembers={tree?.members || []}
+              familyTreeId={treeId}
             />
           )}
         </div>

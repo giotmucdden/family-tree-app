@@ -8,6 +8,7 @@ const passport = require('./config/passport');
 
 const authRoutes = require('./routes/auth');
 const treeRoutes = require('./routes/trees');
+const vaiVeReportRoutes = require('./routes/vaive-reports');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use(passport.session());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trees', treeRoutes);
+app.use('/api/vaive-reports', vaiVeReportRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

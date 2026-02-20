@@ -11,11 +11,20 @@ import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import TreeView from './pages/TreeView';
+import AdminPanel from './pages/AdminPanel';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen">Loading...</div>;
   return user ? children : <Navigate to="/login" />;
+}
+
+function AdminRoute({ children }) {
+  const { user, loading, isAdmin } = useAuth();
+  if (loading) return <div className="loading-screen">Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  if (!isAdmin()) return <Navigate to="/" />;
+  return children;
 }
 
 function AppRoutes() {
@@ -52,6 +61,14 @@ function AppRoutes() {
             <ProtectedRoute>
               <TreeView />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" />} />

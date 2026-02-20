@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
 function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
+  const [pendingReports, setPendingReports] = useState(0);
+
+  // Fetch pending reports count for admin
+  useEffect(() => {
+    if (isAdmin()) {
+      fetch('/api/vaive-reports/admin/stats', { credentials: 'include' })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.pending) {
+            setPendingReports(data.pending);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin]);
 
   return (
     <nav className="navbar">
@@ -20,6 +35,14 @@ function Navbar() {
         >
           {language === 'vi' ? 'EN' : 'VI'}
         </button>
+        {isAdmin() && (
+          <Link to="/admin" className="btn btn-outline btn-admin" title="Admin Panel">
+            🛡️ Admin
+            {pendingReports > 0 && (
+              <span className="admin-badge-count">{pendingReports}</span>
+            )}
+          </Link>
+        )}
         {user?.profilePhoto && (
           <img
             src={user.profilePhoto}
