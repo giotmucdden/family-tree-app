@@ -243,14 +243,12 @@ function TreeView() {
         >
           🌳 Tree View
         </button>
-        {isAdmin() && (
-          <button
-            className={`toggle-btn ${viewMode === 'branch' ? 'active' : ''}`}
-            onClick={() => { setViewMode('branch'); setRelationshipMode(false); }}
-          >
-            🌿 Branch View
-          </button>
-        )}
+        <button
+          className={`toggle-btn ${viewMode === 'branch' ? 'active' : ''}`}
+          onClick={() => { setViewMode('branch'); setRelationshipMode(false); }}
+        >
+          🌿 Branch View
+        </button>
         <button
           className={`toggle-btn ${relationshipMode ? 'active' : ''}`}
           onClick={() => {
