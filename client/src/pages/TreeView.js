@@ -243,27 +243,27 @@ function TreeView() {
         >
           🌳 Tree View
         </button>
-        <button
-          className={`toggle-btn ${viewMode === 'branch' ? 'active' : ''}`}
-          onClick={() => { setViewMode('branch'); setRelationshipMode(false); }}
-        >
-          🌿 Branch View
-        </button>
         {isAdmin() && (
           <button
-            className={`toggle-btn ${relationshipMode ? 'active' : ''}`}
-            onClick={() => {
-              const newMode = !relationshipMode;
-              setRelationshipMode(newMode);
-              setRelationshipMembers([]);
-              if (newMode) {
-                setSelectedMember(null); // Close bottom bar when activating Vai Vế
-              }
-            }}
+            className={`toggle-btn ${viewMode === 'branch' ? 'active' : ''}`}
+            onClick={() => { setViewMode('branch'); setRelationshipMode(false); }}
           >
-            👥 Vai Vế
+            🌿 Branch View
           </button>
         )}
+        <button
+          className={`toggle-btn ${relationshipMode ? 'active' : ''}`}
+          onClick={() => {
+            const newMode = !relationshipMode;
+            setRelationshipMode(newMode);
+            setRelationshipMembers([]);
+            if (newMode) {
+              setSelectedMember(null); // Close bottom bar when activating Vai Vế
+            }
+          }}
+        >
+          👥 Vai Vế
+        </button>
       </div>
 
       {/* Relationship Mode Instructions */}
