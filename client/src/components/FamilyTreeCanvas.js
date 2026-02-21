@@ -15,7 +15,7 @@ const FILTERS = { ALL: 'all', LIVING: 'living', DECEASED: 'deceased', DIVORCED: 
 const VIEWS = { TREE: 'tree', BRANCH: 'branch' }; // TREE = top-down, BRANCH = left-to-right
 const D3_LAYOUTS = { TIDY: 'tidy' }; // Only tidy layout used now
 
-function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false, viewMode, onViewModeChange, userLinkedMemberId, relationshipMode = false, relationshipMembers = [] }) {
+function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false, viewMode, onViewModeChange, userLinkedMemberId, defaultRootId, relationshipMode = false, relationshipMembers = [], setDefaultRootMode = false }) {
   const { t } = useLanguage();
   const svgRef = useRef(null);
   const containerRef = useRef(null);
@@ -36,15 +36,17 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
   onSelectMemberRef.current = onSelectMember;
   onAddChildRef.current = onAddChild;
 
-  // Initialize viewRootId with userLinkedMemberId for member users
+  // Initialize viewRootId with defaultRootId or userLinkedMemberId for member users
   useEffect(() => {
-    if (userLinkedMemberId && members && members.length > 0) {
-      const linkedMember = members.find(m => m._id === userLinkedMemberId);
-      if (linkedMember) {
-        setViewRootId(userLinkedMemberId);
+    // Priority: defaultRootId > userLinkedMemberId
+    const rootToUse = defaultRootId || userLinkedMemberId;
+    if (rootToUse && members && members.length > 0) {
+      const rootMember = members.find(m => m._id === rootToUse);
+      if (rootMember) {
+        setViewRootId(rootToUse);
       }
     }
-  }, [userLinkedMemberId, members]);
+  }, [defaultRootId, userLinkedMemberId, members]);
 
   const rid = (ref) => (ref && typeof ref === 'object' ? ref._id : ref);
 
@@ -2404,51 +2406,6 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       }
     });
 
-    // ── Legend ────────────────────────────────────────────
-    // Hide legend when in relationship mode
-    if (!relationshipMode) {
-      const legend = svg.append('g')
-        .attr('class', 'legend-box')
-        .attr('transform', 'translate(14,14)');
-      const legendItems = [
-        { type: 'group', label: 'Kết hôn / Góa' },
-        { type: 'deceased', label: 'Đã mất (xám)' },
-        { type: 'divorced', label: 'Ly hôn (tách)' },
-        { type: 'explore', label: 'Khám phá nhánh ẩn' },
-      ];
-      const lW = 180;
-      const lH = legendItems.length * 22 + 14;
-      legend.append('rect').attr('width', lW).attr('height', lH).attr('rx', 6)
-        .attr('fill', 'rgba(255,255,255,.92)').attr('stroke', '#e0e0e0');
-
-      legendItems.forEach((it, i) => {
-        const y = i * 22 + 14;
-        if (it.type === 'group') {
-          legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 36).attr('height', 12).attr('rx', 3)
-            .attr('fill', '#e3f2fd').attr('stroke', '#9e9e9e').attr('stroke-width', 1);
-          legend.append('line').attr('x1', 20).attr('y1', y - 6).attr('x2', 20).attr('y2', y + 6)
-            .attr('stroke', '#bdbdbd').attr('stroke-width', 0.5);
-          legend.append('line').attr('x1', 32).attr('y1', y - 6).attr('x2', 32).attr('y2', y + 6)
-            .attr('stroke', '#bdbdbd').attr('stroke-width', 0.5);
-          legend.append('text').attr('x', 20).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('❤️');
-          legend.append('text').attr('x', 32).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('🕊️');
-        } else if (it.type === 'deceased') {
-          legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 36).attr('height', 12).attr('rx', 3)
-            .attr('fill', '#cfd8dc').attr('stroke', '#90a4ae').attr('stroke-width', 1).attr('opacity', 0.6);
-          legend.append('text').attr('x', 26).attr('y', y + 1).attr('text-anchor', 'middle').attr('font-size', '7px').text('🪦');
-        } else if (it.type === 'divorced') {
-          legend.append('rect').attr('x', 8).attr('y', y - 6).attr('width', 14).attr('height', 12).attr('rx', 3)
-            .attr('fill', '#fce4ec').attr('stroke', '#e65100').attr('stroke-width', 1);
-          legend.append('line').attr('x1', 24).attr('y1', y).attr('x2', 38).attr('y2', y)
-            .attr('stroke', '#e65100').attr('stroke-width', 1.5).attr('stroke-dasharray', '3,3');
-          legend.append('text').attr('x', 31).attr('y', y - 4).attr('text-anchor', 'middle').attr('font-size', '7px').text('💔');
-        } else if (it.type === 'explore') {
-          legend.append('text').attr('x', 26).attr('y', y + 2).attr('text-anchor', 'middle').attr('font-size', '12px').text('🔍');
-        }
-        legend.append('text').attr('x', 50).attr('y', y + 3).attr('font-size', '9px').attr('fill', '#424242').text(it.label);
-      });
-    }
-
     // ── Auto-fit ─────────────────────────────────────────
     requestAnimationFrame(() => {
       const bbox = g.node().getBBox();
@@ -2528,9 +2485,8 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
 
   return (
     <div className="tree-canvas-wrapper" ref={containerRef}>
-      {/* Tree root banner for member users */}
-
-      {viewRootId && viewRootName && (
+      {/* Tree root banner - only show for admin users */}
+      {isAdmin && viewRootId && viewRootName && (
         <div className="tree-root-banner">
           <span>👑 Đang xem từ: <strong>{viewRootName}</strong></span>
           <button className="btn btn-outline btn-sm" onClick={resetRoot}>

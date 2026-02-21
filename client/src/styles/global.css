@@ -1247,20 +1247,25 @@ body {
 
 /* ========== VAI VẾ REPORT MODAL ========== */
 .report-wrong-btn {
-  display: block;
-  margin: 12px auto 0;
-  padding: 6px 14px;
-  background: transparent;
-  border: 1px solid var(--danger);
-  color: var(--danger);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px auto 0;
+  padding: 4px 10px;
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #c53030;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  opacity: 0.7;
 }
 
 .report-wrong-btn:hover {
-  background: var(--danger-light);
+  background: #fed7d7;
+  opacity: 1;
 }
 
 .report-modal-overlay {
@@ -1857,18 +1862,79 @@ body {
   color: #0d47a1;
 }
 
-/* Inline Relationship Display */
-.relationship-inline {
+.relationship-instruction {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
-  gap: 16px;
-  background: white;
-  padding: 12px 20px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  flex: 1;
-  max-width: 100%;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  color: #2e7d32;
+  font-weight: 500;
+  max-width: 95vw;
+}
+
+/* Set Default Root Instruction - compact overlay at bottom */
+.set-root-instruction {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  color: #e65100;
+  font-weight: 500;
+  font-size: 13px;
+  max-width: 95vw;
+}
+
+.set-root-instruction span {
+  font-size: 13px;
+}
+
+.set-root-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.set-root-actions .btn {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #e53935 0%, #c62828 100%) !important;
+}
+
+/* Clear Root Button */
+.btn-clear-root {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%) !important;
+  color: #c62828 !important;
+  border-color: #ef9a9a !important;
+}
+
+.btn-clear-root:hover {
+  background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%) !important;
 }
 
 .relationship-inline-member {

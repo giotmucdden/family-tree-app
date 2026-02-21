@@ -24,7 +24,37 @@ function TreeView() {
   const [viewMode, setViewMode] = useState('full'); // 'full' = Tree View, 'branch' = Branch View
   const [relationshipMode, setRelationshipMode] = useState(false); // Vai Vế mode
   const [relationshipMembers, setRelationshipMembers] = useState([]); // Selected members for comparison
+  const [setDefaultRootMode, setSetDefaultRootMode] = useState(false); // Set Default Root mode
+  const [defaultRootId, setDefaultRootId] = useState(null); // Current default root
   const fileInputRef = useRef(null);
+
+  // Load default root from localStorage on mount
+  useEffect(() => {
+    const storageKey = `defaultRoot_${treeId}_${user?._id || user?.id}`;
+    const savedRoot = localStorage.getItem(storageKey);
+    if (savedRoot) {
+      setDefaultRootId(savedRoot);
+    }
+  }, [treeId, user]);
+
+  // Handle setting default root
+  const handleSetDefaultRoot = useCallback((member) => {
+    if (setDefaultRootMode && member) {
+      const storageKey = `defaultRoot_${treeId}_${user?._id || user?.id}`;
+      localStorage.setItem(storageKey, member._id);
+      setDefaultRootId(member._id);
+      setSetDefaultRootMode(false);
+      alert(`✅ Đã đặt "${formatMemberName(member)}" làm gốc mặc định!`);
+    }
+  }, [setDefaultRootMode, treeId, user]);
+
+  // Clear default root
+  const handleClearDefaultRoot = useCallback(() => {
+    const storageKey = `defaultRoot_${treeId}_${user?._id || user?.id}`;
+    localStorage.removeItem(storageKey);
+    setDefaultRootId(null);
+    alert('✅ Đã xóa gốc mặc định!');
+  }, [treeId, user]);
 
   // Helper to format member name
   const formatMemberName = (m) => {
@@ -196,9 +226,6 @@ function TreeView() {
   return (
     <div className="tree-view">
       <div className="tree-toolbar">
-        <button className="btn btn-outline" onClick={() => navigate('/')}>
-          {t('tree_back')}
-        </button>
         <h2>{tree?.name}</h2>
         <div className="toolbar-actions">
           {/* Admin-only actions */}
@@ -239,13 +266,13 @@ function TreeView() {
       <div className="view-toggle-bar">
         <button
           className={`toggle-btn ${viewMode === 'full' ? 'active' : ''}`}
-          onClick={() => { setViewMode('full'); setRelationshipMode(false); }}
+          onClick={() => { setViewMode('full'); setRelationshipMode(false); setSetDefaultRootMode(false); }}
         >
           🌳 Tree View
         </button>
         <button
           className={`toggle-btn ${viewMode === 'branch' ? 'active' : ''}`}
-          onClick={() => { setViewMode('branch'); setRelationshipMode(false); }}
+          onClick={() => { setViewMode('branch'); setRelationshipMode(false); setSetDefaultRootMode(false); }}
         >
           🌿 Branch View
         </button>
@@ -255,14 +282,45 @@ function TreeView() {
             const newMode = !relationshipMode;
             setRelationshipMode(newMode);
             setRelationshipMembers([]);
+            setSetDefaultRootMode(false);
             if (newMode) {
-              setSelectedMember(null); // Close bottom bar when activating Vai Vế
+              setSelectedMember(null);
             }
           }}
         >
           👥 Vai Vế
         </button>
+        {!isAdmin() && (
+          <button
+            className={`toggle-btn ${setDefaultRootMode ? 'active' : ''}`}
+            onClick={() => {
+              setSetDefaultRootMode(!setDefaultRootMode);
+              setRelationshipMode(false);
+              setRelationshipMembers([]);
+              setSelectedMember(null); // Close bottom bar when activating Đặt Gốc
+            }}
+          >
+            🎯 Đặt Gốc
+          </button>
+        )}
       </div>
+
+      {/* Set Default Root Mode Instructions */}
+      {setDefaultRootMode && (
+        <div className="set-root-instruction">
+          <span>🎯 Chọn một thành viên để đặt làm gốc mặc định cho cây của bạn</span>
+          <div className="set-root-actions">
+            {defaultRootId && (
+              <button className="btn btn-sm btn-danger" onClick={handleClearDefaultRoot}>
+                ❌ Xóa Gốc
+              </button>
+            )}
+            <button className="btn btn-sm btn-outline" onClick={() => setSetDefaultRootMode(false)}>
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Relationship Mode Instructions */}
       {relationshipMode && (
@@ -317,14 +375,16 @@ function TreeView() {
           members={tree?.members || []}
           treeId={treeId}
           treeRootId={tree?.rootMember}
-          onSelectMember={relationshipMode ? handleMemberSelect : setSelectedMember}
+          onSelectMember={setDefaultRootMode ? handleSetDefaultRoot : (relationshipMode ? handleMemberSelect : setSelectedMember)}
           onAddChild={handleAddChild}
           isAdmin={isAdmin()}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           userLinkedMemberId={!isAdmin() ? user?.linkedMemberId : null}
+          defaultRootId={!isAdmin() ? defaultRootId : null}
           relationshipMode={relationshipMode}
           relationshipMembers={relationshipMembers}
+          setDefaultRootMode={setDefaultRootMode}
         />
       </div>
 
