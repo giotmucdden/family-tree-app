@@ -24,6 +24,7 @@ function TreeView() {
   const [viewMode, setViewMode] = useState('full'); // 'full' = Tree View, 'branch' = Branch View
   const [relationshipMode, setRelationshipMode] = useState(false); // Vai Vế mode
   const [relationshipMembers, setRelationshipMembers] = useState([]); // Selected members for comparison
+  const [relationshipPath, setRelationshipPath] = useState([]); // Path between 2 selected members
   const [setDefaultRootMode, setSetDefaultRootMode] = useState(false); // Set Default Root mode
   const [defaultRootId, setDefaultRootId] = useState(null); // Current default root
   const fileInputRef = useRef(null);
@@ -68,11 +69,13 @@ function TreeView() {
     if (relationshipMode && member) {
       setRelationshipMembers(prev => {
         if (prev.length === 0) {
+          setRelationshipPath([]); // Reset path when starting new selection
           return [member];
         } else if (prev.length === 1 && prev[0]._id !== member._id) {
           return [prev[0], member];
         } else if (prev.length === 2) {
           // When 2 members are already selected, clicking starts a new comparison
+          setRelationshipPath([]); // Reset path when starting new comparison
           return [member];
         }
         return prev;
@@ -112,35 +115,46 @@ function TreeView() {
           (m) => m._id === addParentInfo.id
         );
         if (parent) {
+          // Helper function to find spouse from either side
+          const findSpouse = (member, allMembers) => {
+            // Check if member has spouses array
+            if (member.spouses && member.spouses.length > 0) {
+              const marriedSpouse = member.spouses.find(sp => sp.status === 'married');
+              const spouseEntry = marriedSpouse || member.spouses[0];
+              const spouseId = typeof spouseEntry.memberId === 'object'
+                ? spouseEntry.memberId._id
+                : spouseEntry.memberId;
+              return spouseId;
+            }
+            // Also check if any other member has this member as spouse
+            for (const m of allMembers) {
+              if (m._id === member._id) continue;
+              if (m.spouses && m.spouses.length > 0) {
+                for (const sp of m.spouses) {
+                  const spId = typeof sp.memberId === 'object' ? sp.memberId._id : sp.memberId;
+                  if (spId === member._id) {
+                    return m._id; // Return the member who has this person as spouse
+                  }
+                }
+              }
+            }
+            return null;
+          };
+
+          const spouseId = findSpouse(parent, tree?.members || []);
+
           if (parent.gender === 'male') {
             payload.fatherId = parent._id;
-            if (parent.spouses && parent.spouses.length > 0) {
-              const marriedSpouse = parent.spouses.find(
-                (sp) => sp.status === 'married'
-              );
-              const spouseEntry = marriedSpouse || parent.spouses[0];
-              const spouseId =
-                typeof spouseEntry.memberId === 'object'
-                  ? spouseEntry.memberId._id
-                  : spouseEntry.memberId;
-              if (spouseId) payload.motherId = spouseId;
-            }
+            if (spouseId) payload.motherId = spouseId;
           } else if (parent.gender === 'female') {
             payload.motherId = parent._id;
-            if (parent.spouses && parent.spouses.length > 0) {
-              const marriedSpouse = parent.spouses.find(
-                (sp) => sp.status === 'married'
-              );
-              const spouseEntry = marriedSpouse || parent.spouses[0];
-              const spouseId =
-                typeof spouseEntry.memberId === 'object'
-                  ? spouseEntry.memberId._id
-                  : spouseEntry.memberId;
-              if (spouseId) payload.fatherId = spouseId;
-            }
+            if (spouseId) payload.fatherId = spouseId;
           } else {
             payload.fatherId = parent._id;
+            if (spouseId) payload.motherId = spouseId;
           }
+
+          console.log('Adding child with parents:', { fatherId: payload.fatherId, motherId: payload.motherId });
         }
       }
 
@@ -365,6 +379,7 @@ function TreeView() {
               member2={relationshipMembers[1]}
               allMembers={tree?.members || []}
               familyTreeId={treeId}
+              onPathCalculated={setRelationshipPath}
             />
           )}
         </div>
@@ -384,6 +399,7 @@ function TreeView() {
           defaultRootId={!isAdmin() ? defaultRootId : null}
           relationshipMode={relationshipMode}
           relationshipMembers={relationshipMembers}
+          relationshipPath={relationshipPath}
           setDefaultRootMode={setDefaultRootMode}
         />
       </div>

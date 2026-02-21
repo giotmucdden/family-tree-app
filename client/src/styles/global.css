@@ -1881,6 +1881,24 @@ body {
   max-width: 95vw;
 }
 
+/* Relationship Path Highlight Animation */
+@keyframes pathGlow {
+  0%, 100% {
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 3px rgba(255, 152, 0, 0.8));
+  }
+  50% {
+    stroke-opacity: 0.6;
+    filter: drop-shadow(0 0 8px rgba(255, 152, 0, 1));
+  }
+}
+
+.link-path-highlighted {
+  stroke: #ff9800 !important;
+  stroke-width: 3px !important;
+  animation: pathGlow 1s ease-in-out infinite;
+}
+
 /* Set Default Root Instruction - compact overlay at bottom */
 .set-root-instruction {
   position: fixed;

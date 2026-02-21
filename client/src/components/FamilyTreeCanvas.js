@@ -15,7 +15,7 @@ const FILTERS = { ALL: 'all', LIVING: 'living', DECEASED: 'deceased', DIVORCED: 
 const VIEWS = { TREE: 'tree', BRANCH: 'branch' }; // TREE = top-down, BRANCH = left-to-right
 const D3_LAYOUTS = { TIDY: 'tidy' }; // Only tidy layout used now
 
-function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false, viewMode, onViewModeChange, userLinkedMemberId, defaultRootId, relationshipMode = false, relationshipMembers = [], setDefaultRootMode = false }) {
+function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddChild, isAdmin = false, viewMode, onViewModeChange, userLinkedMemberId, defaultRootId, relationshipMode = false, relationshipMembers = [], relationshipPath = [], setDefaultRootMode = false }) {
   const { t } = useLanguage();
   const svgRef = useRef(null);
   const containerRef = useRef(null);
@@ -1821,11 +1821,20 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         ? `M${info.srcX},${info.srcY} L${childPos.x},${childPos.y}`
         : bezierLink(info.srcX, info.srcY, childPos.x, childPos.y);
 
+      // Check if this link is in the relationship path
+      const childId = m._id;
+      const parentIds = [info.fId, info.mId].filter(Boolean);
+      const isPathLink = relationshipPath.length > 1 &&
+        relationshipPath.includes(childId) &&
+        parentIds.some(pId => relationshipPath.includes(pId));
+
       const path = g.append('path')
-        .attr('class', 'child-link')
+        .attr('class', isPathLink ? 'child-link link-path-highlighted' : 'child-link')
         .attr('d', linkPath)
-          .attr('fill', 'none').attr('stroke', info.linkColor)
-        .attr('stroke-width', 1.5).attr('opacity', info.linkOpacity)
+        .attr('fill', 'none')
+        .attr('stroke', isPathLink ? '#ff9800' : info.linkColor)
+        .attr('stroke-width', isPathLink ? 3 : 1.5)
+        .attr('opacity', isPathLink ? 1 : info.linkOpacity)
         .attr('stroke-linejoin', 'round')
         .attr('stroke-dasharray', info.linkDash || '0');
 
@@ -2011,17 +2020,26 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         const cardX = cardCX - SECTION_W / 2;
         const cardY = cardCY - CARD_H / 2;
 
+        // Check if this member is in relationship path
+        const inPath = relationshipPath.includes(mem.id);
+        // Check if this member is one of the 2 picked members
+        const isPicked = relationshipMembers.some(m => m._id === mem.id);
+
         // Individual card rect per member
         node.append('rect')
           .attr('x', cardX).attr('y', cardY)
           .attr('width', SECTION_W).attr('height', CARD_H).attr('rx', 10)
           .attr('fill', () => {
+            if (isPicked) return '#c8e6c9';
+            if (inPath) return '#fff9c4';
             if (!p.isLiving) return '#eceff1';
             if (p.gender === 'male') return '#e3f2fd';
             if (p.gender === 'female') return '#fce4ec';
             return '#f5f5f5';
           })
           .attr('stroke', () => {
+            if (isPicked) return '#4caf50';
+            if (inPath) return '#ff9800';
             if (isCurrentRoot(mem.id)) return '#ff6f00';
             if (!p.isLiving) return '#90a4ae';
             const hasDiv = (p.spouses || []).some((s) => s.status === 'divorced');
@@ -2030,8 +2048,12 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
             if (p.gender === 'female') return '#c2185b';
             return '#9e9e9e';
           })
-          .attr('stroke-width', isCurrentRoot(mem.id) ? 2.5 : 1.5)
-          .attr('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))')
+          .attr('stroke-width', isPicked ? 4 : (inPath ? 3 : (isCurrentRoot(mem.id) ? 2.5 : 1.5)))
+          .attr('filter', () => {
+            if (isPicked) return 'drop-shadow(0 2px 10px rgba(76,175,80,0.6))';
+            if (inPath) return 'drop-shadow(0 2px 8px rgba(255,152,0,0.5))';
+            return 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))';
+          })
           .attr('opacity', isVisible(p) ? 1 : 0.3)
           .style('cursor', 'pointer')
           .on('click', (e) => {
@@ -2213,15 +2235,28 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       .attr('class', 'tree-node tree-node-single')
       .attr('transform', (d) => `translate(${d.x - SECTION_W / 2}, ${d.y - CARD_H / 2})`);
 
+    // Check if member is in relationship path
+    const isInPath = (memberId) => relationshipPath.includes(memberId);
+    // Check if member is one of the 2 picked members
+    const isPickedMember = (memberId) => relationshipMembers.some(m => m._id === memberId);
+
     nodes.append('rect')
       .attr('width', SECTION_W).attr('height', CARD_H).attr('rx', 10)
       .attr('fill', (d) => {
+        // Picked members - green
+        if (isPickedMember(d.data._id)) return '#c8e6c9';
+        // Path members - yellow
+        if (isInPath(d.data._id)) return '#fff9c4';
         if (!d.data.isLiving) return '#eceff1';
         if (d.data.gender === 'male') return '#e3f2fd';
         if (d.data.gender === 'female') return '#fce4ec';
         return '#f5f5f5';
       })
       .attr('stroke', (d) => {
+        // Picked members - green stroke
+        if (isPickedMember(d.data._id)) return '#4caf50';
+        // Path members - orange stroke
+        if (isInPath(d.data._id)) return '#ff9800';
         if (isCurrentRoot(d.data._id)) return '#ff6f00';
         if (!d.data.isLiving) return '#90a4ae';
         const hasDiv = (d.data.spouses || []).some((s) => s.status === 'divorced');
@@ -2230,8 +2265,17 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         if (d.data.gender === 'female') return '#c2185b';
         return '#9e9e9e';
       })
-      .attr('stroke-width', (d) => isCurrentRoot(d.data._id) ? 2.5 : 1.5)
-      .attr('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))')
+      .attr('stroke-width', (d) => {
+        if (isPickedMember(d.data._id)) return 4;
+        if (isInPath(d.data._id)) return 3;
+        if (isCurrentRoot(d.data._id)) return 2.5;
+        return 1.5;
+      })
+      .attr('filter', (d) => {
+        if (isPickedMember(d.data._id)) return 'drop-shadow(0 2px 10px rgba(76,175,80,0.6))';
+        if (isInPath(d.data._id)) return 'drop-shadow(0 2px 8px rgba(255,152,0,0.5))';
+        return 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))';
+      })
       .attr('opacity', (d) => (isVisible(d.data) ? 1 : 0.3))
       .style('cursor', 'pointer')
       .on('click', (e, d) => {
@@ -2421,7 +2465,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
     });
 
-  }, [members, treeId, activeFilter, viewRootId, effectiveViewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin, relationshipMode]);
+  }, [members, treeId, activeFilter, viewRootId, effectiveViewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin, relationshipMode, relationshipPath]);
 
   const viewRootName = (() => {
     if (!viewRootId || !members) return null;

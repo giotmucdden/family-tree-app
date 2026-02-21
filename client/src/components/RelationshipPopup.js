@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 /**
  * Vietnamese Kinship (Vai Vế) Calculator
@@ -26,7 +26,7 @@ const ERROR_TYPE_OPTIONS = [
   { value: 'other', label: 'Lỗi khác' },
 ];
 
-function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', familyTreeId, onReportSubmit }) {
+function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', familyTreeId, onReportSubmit, onPathCalculated }) {
   const selectedDialect = dialect; // Mặc định miền Trung
 
   // State cho Report Modal
@@ -1123,6 +1123,77 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
 
     return groups;
   }, [relationship]);
+
+  // ===== CALCULATE PATH FOR HIGHLIGHTING =====
+  const relationshipPath = useMemo(() => {
+    if (!member1 || !member2 || !allMembers || allMembers.length === 0) {
+      return [];
+    }
+
+    const id1 = member1._id;
+    const id2 = member2._id;
+
+    // Build adjacency map including spouse connections
+    const adjacency = {};
+    allMembers.forEach(m => {
+      adjacency[m._id] = new Set();
+
+      // Add parent connections
+      const fId = m.fatherId?._id || m.fatherId;
+      const mId = m.motherId?._id || m.motherId;
+      if (fId) {
+        adjacency[m._id].add(fId);
+        if (!adjacency[fId]) adjacency[fId] = new Set();
+        adjacency[fId].add(m._id);
+      }
+      if (mId) {
+        adjacency[m._id].add(mId);
+        if (!adjacency[mId]) adjacency[mId] = new Set();
+        adjacency[mId].add(m._id);
+      }
+
+      // Add spouse connections
+      if (m.spouses) {
+        m.spouses.forEach(sp => {
+          const spId = sp.memberId?._id || sp.memberId;
+          if (spId) {
+            adjacency[m._id].add(spId);
+            if (!adjacency[spId]) adjacency[spId] = new Set();
+            adjacency[spId].add(m._id);
+          }
+        });
+      }
+    });
+
+    // BFS to find shortest path
+    const queue = [[id1, [id1]]];
+    const visited = new Set([id1]);
+
+    while (queue.length > 0) {
+      const [current, path] = queue.shift();
+
+      if (current === id2) {
+        return path;
+      }
+
+      const neighbors = adjacency[current] || [];
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push([neighbor, [...path, neighbor]]);
+        }
+      }
+    }
+
+    return [];
+  }, [member1, member2, allMembers]);
+
+  // ===== NOTIFY PARENT OF PATH =====
+  useEffect(() => {
+    if (onPathCalculated && relationshipPath.length > 0) {
+      onPathCalculated(relationshipPath);
+    }
+  }, [relationshipPath, onPathCalculated]);
 
   // ===== SELECTED DIALECT TITLES =====
   const selectedDialectTitles = useMemo(() => {
