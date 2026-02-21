@@ -1830,6 +1830,9 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
 
       const path = g.append('path')
         .attr('class', isPathLink ? 'child-link link-path-highlighted' : 'child-link')
+        .attr('data-member-id', childId)
+        .attr('data-parent-ids', parentIds.join(','))
+        .attr('data-original-stroke', info.linkColor)
         .attr('d', linkPath)
         .attr('fill', 'none')
         .attr('stroke', isPathLink ? '#ff9800' : info.linkColor)
@@ -2465,7 +2468,46 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
     });
 
-  }, [members, treeId, activeFilter, viewRootId, effectiveViewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin, relationshipMode, relationshipPath]);
+  }, [members, treeId, activeFilter, viewRootId, effectiveViewMode, d3Layout, buildHierarchy, buildMultiRootHierarchy, getLookup, findCouples, findDefaultRoot, fitToScreen, isAdmin, relationshipMode]);
+
+  // Separate effect for updating path highlights - avoids full re-render
+  useEffect(() => {
+    if (!gRef.current) return;
+    const g = d3.select(gRef.current);
+    
+    // Update all child-link paths
+    g.selectAll('.child-link').each(function() {
+      const pathEl = d3.select(this);
+      const memberId = pathEl.attr('data-member-id');
+      const parentIds = (pathEl.attr('data-parent-ids') || '').split(',').filter(Boolean);
+      
+      const isPathLink = relationshipPath.length > 1 &&
+        relationshipPath.includes(memberId) &&
+        parentIds.some(pId => relationshipPath.includes(pId));
+      
+      pathEl
+        .classed('link-path-highlighted', isPathLink)
+        .attr('stroke', isPathLink ? '#ff9800' : pathEl.attr('data-original-stroke') || '#9ca3af')
+        .attr('stroke-width', isPathLink ? 3 : 1.5)
+        .attr('opacity', isPathLink ? 1 : 0.6);
+    });
+    
+    // Update spouse links
+    g.selectAll('.spouse-link').each(function() {
+      const linkEl = d3.select(this);
+      const id1 = linkEl.attr('data-spouse1');
+      const id2 = linkEl.attr('data-spouse2');
+      
+      const isPathLink = relationshipPath.length > 1 &&
+        relationshipPath.includes(id1) &&
+        relationshipPath.includes(id2);
+      
+      linkEl
+        .classed('link-path-highlighted', isPathLink)
+        .attr('stroke', isPathLink ? '#ff9800' : linkEl.attr('data-original-stroke') || '#ec4899')
+        .attr('stroke-width', isPathLink ? 3 : 2);
+    });
+  }, [relationshipPath]);
 
   const viewRootName = (() => {
     if (!viewRootId || !members) return null;

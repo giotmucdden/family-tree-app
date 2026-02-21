@@ -7,11 +7,6 @@
   box-sizing: border-box;
 }
 
-html {
-  touch-action: manipulation;
-  -ms-touch-action: manipulation;
-}
-
 :root {
   --primary: #1976d2;
   --primary-dark: #1565c0;
@@ -32,8 +27,6 @@ html {
 }
 
 body {
-  touch-action: manipulation;
-  -ms-touch-action: manipulation;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     sans-serif;
   background: var(--bg);
