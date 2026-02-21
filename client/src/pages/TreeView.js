@@ -296,6 +296,7 @@ function TreeView() {
             const newMode = !relationshipMode;
             setRelationshipMode(newMode);
             setRelationshipMembers([]);
+            setRelationshipPath([]); // Clear path when toggling Vai Ve
             setSetDefaultRootMode(false);
             if (newMode) {
               setSelectedMember(null);
@@ -311,6 +312,7 @@ function TreeView() {
               setSetDefaultRootMode(!setDefaultRootMode);
               setRelationshipMode(false);
               setRelationshipMembers([]);
+              setRelationshipPath([]); // Clear path when activating Đặt Gốc
               setSelectedMember(null); // Close bottom bar when activating Đặt Gốc
             }}
           >
