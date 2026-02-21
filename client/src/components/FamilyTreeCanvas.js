@@ -2075,6 +2075,9 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
             const lineY1 = prevCY + CARD_H / 2;
             const lineY2 = cardCY - CARD_H / 2;
             node.append('line')
+              .attr('class', 'spouse-link')
+              .attr('data-spouse1', prevMem.id)
+              .attr('data-spouse2', mem.id)
               .attr('x1', lineX).attr('y1', lineY1)
               .attr('x2', lineX).attr('y2', lineY2)
               .attr('stroke', '#bdbdbd').attr('stroke-width', 1.2);
@@ -2089,6 +2092,9 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
             const lineX2 = cardCX - SECTION_W / 2;
             const lineY = 0; // centered vertically in group
             node.append('line')
+              .attr('class', 'spouse-link')
+              .attr('data-spouse1', prevMem.id)
+              .attr('data-spouse2', mem.id)
               .attr('x1', lineX1).attr('y1', lineY)
               .attr('x2', lineX2).attr('y2', lineY)
               .attr('stroke', '#bdbdbd').attr('stroke-width', 1.2);
@@ -2521,6 +2527,23 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         .attr('stroke', stroke)
         .attr('stroke-width', strokeWidth)
         .attr('filter', filter);
+    });
+    
+    // Update spouse link highlights
+    g.selectAll('.spouse-link').each(function() {
+      const linkEl = d3.select(this);
+      const spouse1 = linkEl.attr('data-spouse1');
+      const spouse2 = linkEl.attr('data-spouse2');
+      
+      // Check if both spouses are in the path (consecutive in path)
+      const isPathLink = relationshipPath.length > 1 &&
+        relationshipPath.includes(spouse1) &&
+        relationshipPath.includes(spouse2);
+      
+      linkEl
+        .classed('link-path-highlighted', isPathLink)
+        .attr('stroke', isPathLink ? '#ff9800' : '#bdbdbd')
+        .attr('stroke-width', isPathLink ? 3 : 1.2);
     });
   }, [relationshipPath, relationshipMembers, members]);
 
