@@ -1021,22 +1021,40 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
 
     // Khác thế hệ
     if (bloodMemberIsOlder) {
-      // bloodMember là vai trên (Cô/Chú/Bác của bloodSpouse)
-      // inLawMember (chồng/vợ của bloodSpouse) phải gọi bloodMember như bloodSpouse gọi
-      // bloodMember gọi inLawMember là "cháu rể" hoặc "cháu dâu"
+      // bloodMember là vai trên của bloodSpouse
+      // Cần xác định: bloodMember là BỐ/MẸ hay CÔ/CHÚ/BÁC của bloodSpouse
+
+      // Kiểm tra quan hệ trực tiếp: bloodMember có phải là cha/mẹ của bloodSpouse không
+      const bloodSpouseFatherId = bloodSpouse.fatherId?._id || bloodSpouse.fatherId;
+      const bloodSpouseMotherId = bloodSpouse.motherId?._id || bloodSpouse.motherId;
+      const isDirectParent = (bloodSpouseFatherId === bloodMember._id) || (bloodSpouseMotherId === bloodMember._id);
+
+      console.log('isDirectParent:', isDirectParent, '| bloodSpouseFatherId:', bloodSpouseFatherId, '| bloodSpouseMotherId:', bloodSpouseMotherId, '| bloodMember._id:', bloodMember._id);
 
       let titleBloodMemberIsCalled; // bloodMember được gọi là gì
+      let titleInLawIsCalled; // inLawMember được gọi là gì
+
       if (genDiff === 1) {
-        // bloodMember là Cô/Chú/Bác của bloodSpouse
-        titleBloodMemberIsCalled = bloodMember.gender === 'male' ? terms.chu : terms.co;
+        if (isDirectParent) {
+          // bloodMember là BỐ/MẸ của bloodSpouse → inLaw là CON DÂU/CON RỂ
+          titleBloodMemberIsCalled = bloodMember.gender === 'male' ? 'Bố chồng' : 'Mẹ chồng';
+          if (inLawMember.gender === 'male' && bloodSpouse.gender === 'female') {
+            titleBloodMemberIsCalled = bloodMember.gender === 'male' ? 'Bố vợ' : 'Mẹ vợ';
+          }
+          titleInLawIsCalled = inLawMember.gender === 'male' ? 'Con rể' : 'Con dâu';
+        } else {
+          // bloodMember là CÔ/CHÚ/BÁC của bloodSpouse → inLaw là CHÁU DÂU/CHÁU RỂ
+          titleBloodMemberIsCalled = bloodMember.gender === 'male' ? terms.chu : terms.co;
+          titleInLawIsCalled = inLawMember.gender === 'male' ? 'Cháu rể' : 'Cháu dâu';
+        }
       } else if (genDiff === 2) {
         // Dùng "Ông"/"Bà" cho họ hàng, không phải "Ông nội"/"Bà nội" (vì không phải quan hệ trực tiếp)
         titleBloodMemberIsCalled = bloodMember.gender === 'male' ? 'Ông' : 'Bà';
+        titleInLawIsCalled = inLawMember.gender === 'male' ? 'Cháu rể' : 'Cháu dâu';
       } else {
         titleBloodMemberIsCalled = 'Bậc trên ' + genDiff + ' đời';
+        titleInLawIsCalled = inLawMember.gender === 'male' ? 'Cháu rể' : 'Cháu dâu';
       }
-
-      const titleInLawIsCalled = inLawMember.gender === 'male' ? 'Cháu rể' : 'Cháu dâu';
 
       console.log('→ bloodMember vai trên, inLaw gọi bloodMember:', titleBloodMemberIsCalled);
       console.log('→ bloodMember gọi inLaw:', titleInLawIsCalled);
@@ -1125,41 +1143,52 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
   }, [relationship]);
 
   // ===== CALCULATE PATH FOR HIGHLIGHTING =====
-  const relationshipPath = useMemo(() => {
+  const [relationshipPath, setRelationshipPath] = useState([]);
+  
+  useEffect(() => {
     if (!member1 || !member2 || !allMembers || allMembers.length === 0) {
-      return [];
+      setRelationshipPath([]);
+      return;
     }
 
-    const id1 = member1._id;
-    const id2 = member2._id;
+    const id1 = String(member1._id);
+    const id2 = String(member2._id);
 
-    // Build adjacency map including spouse connections
+    // Build adjacency map including parent-child and spouse connections
     const adjacency = {};
+    
+    // Initialize adjacency for all members
     allMembers.forEach(m => {
-      adjacency[m._id] = new Set();
+      const mId = String(m._id);
+      if (!adjacency[mId]) adjacency[mId] = new Set();
+    });
+    
+    allMembers.forEach(m => {
+      const mId = String(m._id);
 
-      // Add parent connections
-      const fId = m.fatherId?._id || m.fatherId;
-      const mId = m.motherId?._id || m.motherId;
+      // Add parent connections (bidirectional)
+      const fId = m.fatherId ? String(m.fatherId._id || m.fatherId) : null;
+      const mothId = m.motherId ? String(m.motherId._id || m.motherId) : null;
+      
       if (fId) {
-        adjacency[m._id].add(fId);
+        adjacency[mId].add(fId);
         if (!adjacency[fId]) adjacency[fId] = new Set();
-        adjacency[fId].add(m._id);
+        adjacency[fId].add(mId);
       }
-      if (mId) {
-        adjacency[m._id].add(mId);
-        if (!adjacency[mId]) adjacency[mId] = new Set();
-        adjacency[mId].add(m._id);
+      if (mothId) {
+        adjacency[mId].add(mothId);
+        if (!adjacency[mothId]) adjacency[mothId] = new Set();
+        adjacency[mothId].add(mId);
       }
 
-      // Add spouse connections
-      if (m.spouses) {
+      // Add spouse connections (bidirectional)
+      if (m.spouses && m.spouses.length > 0) {
         m.spouses.forEach(sp => {
-          const spId = sp.memberId?._id || sp.memberId;
+          const spId = sp.memberId ? String(sp.memberId._id || sp.memberId) : null;
           if (spId) {
-            adjacency[m._id].add(spId);
+            adjacency[mId].add(spId);
             if (!adjacency[spId]) adjacency[spId] = new Set();
-            adjacency[spId].add(m._id);
+            adjacency[spId].add(mId);
           }
         });
       }
@@ -1173,10 +1202,11 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
       const [current, path] = queue.shift();
 
       if (current === id2) {
-        return path;
+        setRelationshipPath(path);
+        return;
       }
 
-      const neighbors = adjacency[current] || [];
+      const neighbors = adjacency[current] || new Set();
       for (const neighbor of neighbors) {
         if (!visited.has(neighbor)) {
           visited.add(neighbor);
@@ -1185,12 +1215,16 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
       }
     }
 
-    return [];
+    setRelationshipPath([]);
   }, [member1, member2, allMembers]);
 
   // ===== NOTIFY PARENT OF PATH =====
   useEffect(() => {
-    if (onPathCalculated && relationshipPath.length > 0) {
+    console.log('=== PATH NOTIFICATION ===');
+    console.log('relationshipPath:', relationshipPath);
+    console.log('onPathCalculated exists:', !!onPathCalculated);
+
+    if (onPathCalculated) {
       onPathCalculated(relationshipPath);
     }
   }, [relationshipPath, onPathCalculated]);

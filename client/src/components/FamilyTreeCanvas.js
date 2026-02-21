@@ -2454,11 +2454,11 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
   useEffect(() => {
     if (!gRef.current) return;
     const g = d3.select(gRef.current);
-    
+
     // Helper functions
     const isInPath = (memberId) => relationshipPath.includes(memberId);
     const isPickedMember = (memberId) => relationshipMembers.some(m => m._id === memberId);
-    
+
     // Update all child-link paths
     g.selectAll('.child-link').each(function() {
       const pathEl = d3.select(this);
@@ -2466,33 +2466,33 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       const parentIds = (pathEl.attr('data-parent-ids') || '').split(',').filter(Boolean);
       const originalStroke = pathEl.attr('data-original-stroke') || '#9ca3af';
       const originalOpacity = parseFloat(pathEl.attr('data-original-opacity')) || 0.6;
-      
+
       const isPathLink = relationshipPath.length > 1 &&
         relationshipPath.includes(memberId) &&
         parentIds.some(pId => relationshipPath.includes(pId));
-      
+
       pathEl
         .classed('link-path-highlighted', isPathLink)
         .attr('stroke', isPathLink ? '#ff9800' : originalStroke)
         .attr('stroke-width', isPathLink ? 3 : 1.5)
         .attr('opacity', isPathLink ? 1 : originalOpacity);
     });
-    
+
     // Update node highlights based on picked members and path
     g.selectAll('.tree-node rect, .member-card-bg').each(function() {
       const rectEl = d3.select(this);
       const memberId = rectEl.attr('data-member-id');
       if (!memberId) return;
-      
+
       const memberData = members.find(m => m._id === memberId);
       if (!memberData) return;
-      
+
       const isPicked = isPickedMember(memberId);
       const inPath = isInPath(memberId);
-      
+
       // Determine fill color
       let fill, stroke, strokeWidth, filter;
-      
+
       if (isPicked) {
         fill = '#c8e6c9';
         stroke = '#4caf50';
@@ -2521,25 +2521,25 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         strokeWidth = 1.5;
         filter = 'drop-shadow(0 1px 3px rgba(0,0,0,0.1))';
       }
-      
+
       rectEl
         .attr('fill', fill)
         .attr('stroke', stroke)
         .attr('stroke-width', strokeWidth)
         .attr('filter', filter);
     });
-    
+
     // Update spouse link highlights
     g.selectAll('.spouse-link').each(function() {
       const linkEl = d3.select(this);
       const spouse1 = linkEl.attr('data-spouse1');
       const spouse2 = linkEl.attr('data-spouse2');
-      
+
       // Check if both spouses are in the path (consecutive in path)
       const isPathLink = relationshipPath.length > 1 &&
         relationshipPath.includes(spouse1) &&
         relationshipPath.includes(spouse2);
-      
+
       linkEl
         .classed('link-path-highlighted', isPathLink)
         .attr('stroke', isPathLink ? '#ff9800' : '#bdbdbd')
