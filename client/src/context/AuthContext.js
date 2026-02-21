@@ -46,14 +46,28 @@ export function AuthProvider({ children }) {
     // Find the user's linked member to get their spouses
     const linkedMember = members.find(m => m._id === user.linkedMemberId);
 
-    // Get spouse IDs
+    // Get spouse IDs - check both directions
     const spouseIds = new Set();
+
+    // Check linkedMember's spouses array
     if (linkedMember?.spouses) {
       linkedMember.spouses.forEach(sp => {
         const spouseId = typeof sp.memberId === 'object' ? sp.memberId?._id : sp.memberId;
         if (spouseId) spouseIds.add(spouseId);
       });
     }
+
+    // Also check reverse: find members who have linkedMemberId as their spouse
+    members.forEach(m => {
+      if (m.spouses) {
+        m.spouses.forEach(sp => {
+          const spouseId = typeof sp.memberId === 'object' ? sp.memberId?._id : sp.memberId;
+          if (spouseId === user.linkedMemberId) {
+            spouseIds.add(m._id);
+          }
+        });
+      }
+    });
 
     // Build a set of all downstream member IDs from user's linked member
     const getDownstreamIds = (startId) => {

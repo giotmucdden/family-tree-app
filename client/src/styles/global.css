@@ -7,6 +7,11 @@
   box-sizing: border-box;
 }
 
+html {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+}
+
 :root {
   --primary: #1976d2;
   --primary-dark: #1565c0;
@@ -27,6 +32,8 @@
 }
 
 body {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     sans-serif;
   background: var(--bg);
@@ -559,6 +566,7 @@ body {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 61px);
+  overflow: hidden;
 }
 
 .tree-toolbar {
@@ -568,6 +576,19 @@ body {
   padding: 12px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.view-toggle-bar {
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.tree-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 }
 
 .tree-toolbar h2 {
@@ -3044,15 +3065,25 @@ body {
     padding: 18px;
   }
 
-  /* ── Tree View Page ── */
+    /* ── Tree View Page ── */
   .tree-view {
     height: calc(100vh - 53px);
+    overflow: hidden;
+    position: relative;
   }
 
   .tree-toolbar {
+    position: sticky;
+    top: 0;
     padding: 8px 12px;
     gap: 6px;
     flex-wrap: wrap;
+    background: var(--surface);
+    z-index: 20;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .tree-toolbar h2 {
@@ -3071,8 +3102,54 @@ body {
     gap: 6px;
   }
 
+  .view-toggle-bar {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 15;
+    padding: 6px 8px;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   .tree-container {
-    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    touch-action: none; /* Allow D3 to handle all touch events for zoom/pan */
+  }
+
+  .tree-svg {
+    touch-action: none; /* D3 handles zoom/pan */
+  }
+
+  .relationship-instruction {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    max-width: 95vw;
+    padding: 10px 12px;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .set-root-instruction {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    max-width: 95vw;
+    padding: 10px 12px;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   /* ── Member Detail Panel — slide-over on mobile ── */

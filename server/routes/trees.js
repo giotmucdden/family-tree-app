@@ -212,26 +212,49 @@ router.put('/:treeId/members/:memberId', async (req, res) => {
     const memberId = req.params.memberId;
     const treeId = req.params.treeId;
 
-    // Check authorization: admin can edit all, member can edit self and downstream
+    // Check authorization: admin can edit all, member can edit self, spouse, and downstream
     const userRole = req.user.role;
     const linkedMemberId = req.user.linkedMemberId?.toString();
 
     if (userRole !== 'admin' && linkedMemberId) {
-      // Get all members to check downstream
+      // Get all members to check downstream and spouse
       const allMembers = await FamilyMember.find({ familyTree: treeId });
 
-      // Build downstream set from linked member
-      const downstreamIds = new Set();
-      downstreamIds.add(linkedMemberId);
+      // Build editable set: self + spouse + downstream
+      const editableIds = new Set();
+      editableIds.add(linkedMemberId);
 
+      // Find linked member to get their spouse
+      const linkedMember = allMembers.find(m => m._id.toString() === linkedMemberId);
+
+      if (linkedMember && linkedMember.spouses) {
+        linkedMember.spouses.forEach(sp => {
+          const spouseId = sp.memberId?.toString() || sp.memberId;
+          if (spouseId) editableIds.add(spouseId);
+        });
+      }
+
+      // Also check if any member has linkedMember as spouse (reverse check)
+      allMembers.forEach(m => {
+        if (m.spouses && m.spouses.length > 0) {
+          m.spouses.forEach(sp => {
+            const spouseId = sp.memberId?.toString() || sp.memberId;
+            if (spouseId === linkedMemberId) {
+              editableIds.add(m._id.toString());
+            }
+          });
+        }
+      });
+
+      // Find all downstream (children, grandchildren, etc.)
       const findChildren = (parentId) => {
         allMembers.forEach((m) => {
           const fatherId = m.fatherId?.toString();
           const motherId = m.motherId?.toString();
           if (fatherId === parentId || motherId === parentId) {
             const childId = m._id.toString();
-            if (!downstreamIds.has(childId)) {
-              downstreamIds.add(childId);
+            if (!editableIds.has(childId)) {
+              editableIds.add(childId);
               findChildren(childId);
             }
           }
@@ -239,7 +262,7 @@ router.put('/:treeId/members/:memberId', async (req, res) => {
       };
       findChildren(linkedMemberId);
 
-      if (!downstreamIds.has(memberId)) {
+      if (!editableIds.has(memberId)) {
         return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa thành viên này' });
       }
     } else if (userRole !== 'admin') {
