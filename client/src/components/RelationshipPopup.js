@@ -1145,7 +1145,7 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
 
   // ===== CALCULATE PATH FOR HIGHLIGHTING =====
   const [relationshipPath, setRelationshipPath] = useState([]);
-  
+
   useEffect(() => {
     if (!member1 || !member2 || !allMembers || allMembers.length === 0) {
       setRelationshipPath([]);
@@ -1157,20 +1157,20 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
 
     // Build adjacency map including parent-child and spouse connections
     const adjacency = {};
-    
+
     // Initialize adjacency for all members
     allMembers.forEach(m => {
       const mId = String(m._id);
       if (!adjacency[mId]) adjacency[mId] = new Set();
     });
-    
+
     allMembers.forEach(m => {
       const mId = String(m._id);
 
       // Add parent connections (bidirectional)
       const fId = m.fatherId ? String(m.fatherId._id || m.fatherId) : null;
       const mothId = m.motherId ? String(m.motherId._id || m.motherId) : null;
-      
+
       if (fId) {
         adjacency[mId].add(fId);
         if (!adjacency[fId]) adjacency[fId] = new Set();
