@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 
 /**
  * Vietnamese Kinship (Vai Vế) Calculator
@@ -1386,8 +1387,8 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
         </button>
       </div>
 
-      {/* Report Modal */}
-      {showReportModal && (
+      {/* Report Modal - rendered at body level using portal */}
+      {showReportModal && ReactDOM.createPortal(
         <div className="report-modal-overlay" onClick={() => setShowReportModal(false)}>
           <div className="report-modal" onClick={e => e.stopPropagation()}>
             <div className="report-modal-header">
@@ -1484,7 +1485,8 @@ function RelationshipPopup({ member1, member2, allMembers, dialect = 'trung', fa
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Member 2 - hiển thị title1to2 (member1 gọi member2 là gì) */}
