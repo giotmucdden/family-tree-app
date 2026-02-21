@@ -1821,23 +1821,21 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         ? `M${info.srcX},${info.srcY} L${childPos.x},${childPos.y}`
         : bezierLink(info.srcX, info.srcY, childPos.x, childPos.y);
 
-      // Check if this link is in the relationship path
+      // Store data for path highlighting (handled by separate useEffect)
       const childId = m._id;
       const parentIds = [info.fId, info.mId].filter(Boolean);
-      const isPathLink = relationshipPath.length > 1 &&
-        relationshipPath.includes(childId) &&
-        parentIds.some(pId => relationshipPath.includes(pId));
 
       const path = g.append('path')
-        .attr('class', isPathLink ? 'child-link link-path-highlighted' : 'child-link')
+        .attr('class', 'child-link')
         .attr('data-member-id', childId)
         .attr('data-parent-ids', parentIds.join(','))
         .attr('data-original-stroke', info.linkColor)
+        .attr('data-original-opacity', info.linkOpacity)
         .attr('d', linkPath)
         .attr('fill', 'none')
-        .attr('stroke', isPathLink ? '#ff9800' : info.linkColor)
-        .attr('stroke-width', isPathLink ? 3 : 1.5)
-        .attr('opacity', isPathLink ? 1 : info.linkOpacity)
+        .attr('stroke', info.linkColor)
+        .attr('stroke-width', 1.5)
+        .attr('opacity', info.linkOpacity)
         .attr('stroke-linejoin', 'round')
         .attr('stroke-dasharray', info.linkDash || '0');
 
@@ -2480,6 +2478,8 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       const pathEl = d3.select(this);
       const memberId = pathEl.attr('data-member-id');
       const parentIds = (pathEl.attr('data-parent-ids') || '').split(',').filter(Boolean);
+      const originalStroke = pathEl.attr('data-original-stroke') || '#9ca3af';
+      const originalOpacity = parseFloat(pathEl.attr('data-original-opacity')) || 0.6;
       
       const isPathLink = relationshipPath.length > 1 &&
         relationshipPath.includes(memberId) &&
@@ -2487,25 +2487,9 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       
       pathEl
         .classed('link-path-highlighted', isPathLink)
-        .attr('stroke', isPathLink ? '#ff9800' : pathEl.attr('data-original-stroke') || '#9ca3af')
+        .attr('stroke', isPathLink ? '#ff9800' : originalStroke)
         .attr('stroke-width', isPathLink ? 3 : 1.5)
-        .attr('opacity', isPathLink ? 1 : 0.6);
-    });
-    
-    // Update spouse links
-    g.selectAll('.spouse-link').each(function() {
-      const linkEl = d3.select(this);
-      const id1 = linkEl.attr('data-spouse1');
-      const id2 = linkEl.attr('data-spouse2');
-      
-      const isPathLink = relationshipPath.length > 1 &&
-        relationshipPath.includes(id1) &&
-        relationshipPath.includes(id2);
-      
-      linkEl
-        .classed('link-path-highlighted', isPathLink)
-        .attr('stroke', isPathLink ? '#ff9800' : linkEl.attr('data-original-stroke') || '#ec4899')
-        .attr('stroke-width', isPathLink ? 3 : 2);
+        .attr('opacity', isPathLink ? 1 : originalOpacity);
     });
   }, [relationshipPath]);
 
