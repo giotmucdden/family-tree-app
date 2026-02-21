@@ -168,11 +168,48 @@ function MemberModal({ title, initialData, members, onSubmit, onClose, onAddChil
       alert('File quá lớn. Tối đa 5MB.');
       return;
     }
+    
+    // Resize image before storing to improve canvas performance
+    const img = new Image();
     const reader = new FileReader();
+    
     reader.onload = (evt) => {
-      const base64 = evt.target.result;
-      setPhotoPreview(base64);
-      setForm((prev) => ({ ...prev, photo: base64 }));
+      img.onload = () => {
+        // Target max dimensions for member photos
+        const MAX_WIDTH = 300;
+        const MAX_HEIGHT = 300;
+        
+        let width = img.width;
+        let height = img.height;
+        
+        // Calculate new dimensions maintaining aspect ratio
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        // Create canvas and resize
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to compressed JPEG (quality 0.8)
+        const resizedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        
+        setPhotoPreview(resizedBase64);
+        setForm((prev) => ({ ...prev, photo: resizedBase64 }));
+      };
+      img.src = evt.target.result;
     };
     reader.readAsDataURL(file);
   }
