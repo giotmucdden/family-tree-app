@@ -14,14 +14,15 @@ const customStyles = {
     left: 0,
     right: 0,
     bottom: 0,
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   content: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    position: 'relative',
+    inset: 'auto',
     width: '100%',
+    maxWidth: '100%',
     height: '100%',
     overflow: 'hidden',
     borderRadius: 0,
@@ -31,6 +32,7 @@ const customStyles = {
     margin: 0,
     display: 'flex',
     flexDirection: 'column',
+    animation: 'slideFromTop 0.3s ease-out',
   },
 };
 
