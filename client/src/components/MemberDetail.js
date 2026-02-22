@@ -48,6 +48,14 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
     return status;
   };
 
+  // Format date to avoid timezone issues
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    const dateOnly = dateStr.substring(0, 10); // "1990-05-15"
+    const [year, month, day] = dateOnly.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   const statusBadgeClass = (status) => {
     if (status === 'married') return 'badge-married';
     if (status === 'divorced') return 'badge-divorced';
@@ -104,7 +112,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
           <div className="info-row">
             <span className="info-label">{t('detail_birth')}</span>
             <span className="info-value">
-              {new Date(member.birthDate).toLocaleDateString('vi-VN')}
+              {formatDate(member.birthDate)}
             </span>
           </div>
         )}
@@ -113,7 +121,7 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
           <div className="info-row">
             <span className="info-label">{t('detail_death')}</span>
             <span className="info-value">
-              {new Date(member.deathDate).toLocaleDateString('vi-VN')}
+              {formatDate(member.deathDate)}
             </span>
           </div>
         )}

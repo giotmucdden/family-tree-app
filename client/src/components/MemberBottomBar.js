@@ -56,10 +56,11 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember, 
 
   const formatDate = (dateStr) => {
     if (!dateStr) return null;
-    const d = new Date(dateStr);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
+    // Parse date string directly to avoid timezone issues
+    // Database stores dates like "1990-05-15T00:00:00.000Z"
+    // We want to display the date as stored, not converted to local timezone
+    const dateOnly = dateStr.substring(0, 10); // "1990-05-15"
+    const [year, month, day] = dateOnly.split('-');
     return `${day}/${month}/${year}`;
   };
 
