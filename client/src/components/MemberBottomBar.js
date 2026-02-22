@@ -61,7 +61,8 @@ function MemberBottomBar({ member, allMembers, onClose, onEdit, onSelectMember, 
     // We want to display the date as stored, not converted to local timezone
     const dateOnly = dateStr.substring(0, 10); // "1990-05-15"
     const [year, month, day] = dateOnly.split('-');
-    return `${day}/${month}/${year}`;
+    // Vietnamese style: Ngày ... Tháng ... Năm ...
+    return `Ngày ${parseInt(day, 10)} Tháng ${parseInt(month, 10)} Năm ${year}`;
   };
 
   const fatherMember = resolveMember(member.fatherId);

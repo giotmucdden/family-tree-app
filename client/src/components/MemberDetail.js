@@ -48,12 +48,13 @@ function MemberDetail({ member, allMembers, onClose, onEdit, onDelete, onAddChil
     return status;
   };
 
-  // Format date to avoid timezone issues
+  // Format date to avoid timezone issues - Vietnamese style
   const formatDate = (dateStr) => {
     if (!dateStr) return null;
     const dateOnly = dateStr.substring(0, 10); // "1990-05-15"
     const [year, month, day] = dateOnly.split('-');
-    return `${day}/${month}/${year}`;
+    // Vietnamese style: Ngày ... Tháng ... Năm ...
+    return `Ngày ${parseInt(day, 10)} Tháng ${parseInt(month, 10)} Năm ${year}`;
   };
 
   const statusBadgeClass = (status) => {
