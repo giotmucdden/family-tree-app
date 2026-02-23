@@ -24,7 +24,8 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
   const onSelectMemberRef = useRef(onSelectMember);
   const onAddChildRef = useRef(onAddChild);
   const [activeFilter, setActiveFilter] = useState(FILTERS.ALL);
-  const [viewRootId, setViewRootId] = useState(null);
+  // Initialize viewRootId immediately with defaultRootId or userLinkedMemberId to prevent full tree flash
+  const [viewRootId, setViewRootId] = useState(() => defaultRootId || userLinkedMemberId || null);
   // Use prop viewMode if provided, otherwise use local state
   const [localViewMode, setLocalViewMode] = useState(viewMode || VIEWS.TREE);
   const effectiveViewMode = viewMode !== undefined ? viewMode : localViewMode;
