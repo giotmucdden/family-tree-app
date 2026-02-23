@@ -305,20 +305,18 @@ function TreeView() {
         >
           👥 Vai Vế
         </button>
-        {!isAdmin() && (
-          <button
-            className={`toggle-btn ${setDefaultRootMode ? 'active' : ''}`}
-            onClick={() => {
-              setSetDefaultRootMode(!setDefaultRootMode);
-              setRelationshipMode(false);
-              setRelationshipMembers([]);
-              setRelationshipPath([]); // Clear path when activating Đặt Gốc
-              setSelectedMember(null); // Close bottom bar when activating Đặt Gốc
-            }}
-          >
-            🎯 Đặt Gốc
-          </button>
-        )}
+        <button
+          className={`toggle-btn ${setDefaultRootMode ? 'active' : ''}`}
+          onClick={() => {
+            setSetDefaultRootMode(!setDefaultRootMode);
+            setRelationshipMode(false);
+            setRelationshipMembers([]);
+            setRelationshipPath([]); // Clear path when activating Đặt Gốc
+            setSelectedMember(null); // Close bottom bar when activating Đặt Gốc
+          }}
+        >
+          🎯 Đặt Gốc
+        </button>
       </div>
 
       {/* Set Default Root Mode Instructions */}

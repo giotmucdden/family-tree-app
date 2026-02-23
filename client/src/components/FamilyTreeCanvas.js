@@ -2030,6 +2030,8 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         // Individual card rect per member
         node.append('rect')
           .attr('data-member-id', mem.id)
+          .attr('data-gender', p.gender || 'other')
+          .attr('data-deceased', !p.isLiving ? 'true' : 'false')
           .attr('x', cardX).attr('y', cardY)
           .attr('width', SECTION_W).attr('height', CARD_H).attr('rx', 10)
           .attr('fill', () => {
@@ -2238,6 +2240,8 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
 
     nodes.append('rect')
       .attr('data-member-id', (d) => d.data._id)
+      .attr('data-gender', (d) => d.data.gender || 'other')
+      .attr('data-deceased', (d) => !d.data.isLiving ? 'true' : 'false')
       .attr('width', SECTION_W).attr('height', CARD_H).attr('rx', 10)
       .attr('fill', (d) => {
         // Default colors - highlighting handled by separate useEffect
@@ -2460,6 +2464,33 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
     const isInPath = (memberId) => relationshipPath.includes(memberId);
     const isPickedMember = (memberId) => relationshipMembers.some(m => m._id === memberId);
 
+    // Build a lookup for member parents to determine direction
+    const memberParents = {};
+    members.forEach(m => {
+      const fId = typeof m.fatherId === 'object' ? m.fatherId?._id : m.fatherId;
+      const mId = typeof m.motherId === 'object' ? m.motherId?._id : m.motherId;
+      memberParents[m._id] = { fatherId: fId, motherId: mId };
+    });
+
+    // Determine link direction in the path
+    // Returns 'upstream' if going from child to parent, 'downstream' if parent to child
+    const getLinkDirection = (memberId, parentId) => {
+      if (relationshipPath.length < 2) return null;
+
+      const memberIdx = relationshipPath.indexOf(memberId);
+      const parentIdx = relationshipPath.indexOf(parentId);
+
+      if (memberIdx === -1 || parentIdx === -1) return null;
+
+      // If parent comes before member in path, we're going downstream (parent → child)
+      // If member comes before parent in path, we're going upstream (child → parent)
+      if (parentIdx < memberIdx) {
+        return 'downstream';
+      } else {
+        return 'upstream';
+      }
+    };
+
     // Update all child-link paths
     g.selectAll('.child-link').each(function() {
       const pathEl = d3.select(this);
@@ -2468,15 +2499,38 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
       const originalStroke = pathEl.attr('data-original-stroke') || '#9ca3af';
       const originalOpacity = parseFloat(pathEl.attr('data-original-opacity')) || 0.6;
 
-      const isPathLink = relationshipPath.length > 1 &&
-        relationshipPath.includes(memberId) &&
-        parentIds.some(pId => relationshipPath.includes(pId));
+      // Find if this link is part of the path
+      let isPathLink = false;
+      let linkDirection = null;
 
+      if (relationshipPath.length > 1 && relationshipPath.includes(memberId)) {
+        for (const pId of parentIds) {
+          if (relationshipPath.includes(pId)) {
+            isPathLink = true;
+            linkDirection = getLinkDirection(memberId, pId);
+            break;
+          }
+        }
+      }
+
+      // Remove old direction classes
       pathEl
         .classed('link-path-highlighted', isPathLink)
-        .attr('stroke', isPathLink ? '#ff9800' : originalStroke)
-        .attr('stroke-width', isPathLink ? 3 : 1.5)
-        .attr('opacity', isPathLink ? 1 : originalOpacity);
+        .classed('link-upstream', isPathLink && linkDirection === 'upstream')
+        .classed('link-downstream', isPathLink && linkDirection === 'downstream');
+
+      // Set default stroke color (CSS will override for dark mode)
+      if (isPathLink) {
+        if (linkDirection === 'upstream') {
+          pathEl.attr('stroke', '#4caf50').attr('stroke-width', 3).attr('opacity', 1);
+        } else if (linkDirection === 'downstream') {
+          pathEl.attr('stroke', '#ff9800').attr('stroke-width', 3).attr('opacity', 1);
+        } else {
+          pathEl.attr('stroke', '#ff9800').attr('stroke-width', 3).attr('opacity', 1);
+        }
+      } else {
+        pathEl.attr('stroke', originalStroke).attr('stroke-width', 1.5).attr('opacity', originalOpacity);
+      }
     });
 
     // Update node highlights based on picked members and path
@@ -2530,7 +2584,7 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
         .attr('filter', filter);
     });
 
-    // Update spouse link highlights
+    // Update spouse link highlights (spouse links are horizontal, use neutral color)
     g.selectAll('.spouse-link').each(function() {
       const linkEl = d3.select(this);
       const spouse1 = linkEl.attr('data-spouse1');
@@ -2543,10 +2597,118 @@ function FamilyTreeCanvas({ members, treeId, treeRootId, onSelectMember, onAddCh
 
       linkEl
         .classed('link-path-highlighted', isPathLink)
-        .attr('stroke', isPathLink ? '#ff9800' : '#bdbdbd')
+        .classed('link-spouse', isPathLink)
+        .attr('stroke', isPathLink ? '#e91e63' : '#bdbdbd')
         .attr('stroke-width', isPathLink ? 3 : 1.2);
     });
   }, [relationshipPath, relationshipMembers, members]);
+
+// Separate effect for highlighting the focused/selected member on main canvas
+useEffect(() => {
+  if (!gRef.current) return;
+  const g = d3.select(gRef.current);
+
+  // Remove previous focused highlight
+  g.selectAll('.tree-node rect, .member-card-bg')
+    .classed('node-focused', false)
+    .classed('node-unfocused', false);
+
+  // Remove link highlighting
+  g.selectAll('.child-link, .spouse-link')
+    .classed('link-unfocused', false);
+
+  // If in relationship mode, don't apply focused highlight (handled by path highlighting)
+  if (relationshipMode || !focusedMemberId) return;
+
+  // Build set of related member IDs (ancestors + descendants + spouses)
+  const relatedIds = new Set([focusedMemberId]);
+
+  // Helper to get member by ID
+  const getMember = (id) => members.find(m => m._id === id);
+
+  // Add ancestors (parents, grandparents, etc.)
+  const addAncestors = (memberId) => {
+    const member = getMember(memberId);
+    if (!member) return;
+
+    const fId = typeof member.fatherId === 'object' ? member.fatherId?._id : member.fatherId;
+    const mId = typeof member.motherId === 'object' ? member.motherId?._id : member.motherId;
+
+    if (fId && !relatedIds.has(fId)) {
+      relatedIds.add(fId);
+      addAncestors(fId);
+    }
+    if (mId && !relatedIds.has(mId)) {
+      relatedIds.add(mId);
+      addAncestors(mId);
+    }
+  };
+
+  // Add descendants (children, grandchildren, etc.)
+  const addDescendants = (memberId) => {
+    members.forEach(m => {
+      const fId = typeof m.fatherId === 'object' ? m.fatherId?._id : m.fatherId;
+      const mId = typeof m.motherId === 'object' ? m.motherId?._id : m.motherId;
+
+      if ((fId === memberId || mId === memberId) && !relatedIds.has(m._id)) {
+        relatedIds.add(m._id);
+        addDescendants(m._id);
+      }
+    });
+  };
+
+  // Add spouses of focused member
+  const focusedMemberData = getMember(focusedMemberId);
+  if (focusedMemberData?.spouses) {
+    focusedMemberData.spouses.forEach(sp => {
+      const spId = typeof sp.spouseId === 'object' ? sp.spouseId?._id : sp.spouseId;
+      if (spId) relatedIds.add(spId);
+    });
+  }
+
+  addAncestors(focusedMemberId);
+  addDescendants(focusedMemberId);
+
+  // Apply focused/unfocused classes to member cards
+  g.selectAll('.tree-node rect, .member-card-bg').each(function() {
+    const rectEl = d3.select(this);
+    const memberId = rectEl.attr('data-member-id');
+
+    if (memberId === focusedMemberId) {
+      rectEl.classed('node-focused', true);
+    } else if (!relatedIds.has(memberId)) {
+      rectEl.classed('node-unfocused', true);
+    }
+  });
+
+  // Grey out unrelated child links
+  g.selectAll('.child-link').each(function() {
+    const linkEl = d3.select(this);
+    const memberId = linkEl.attr('data-member-id');
+    const parentIds = (linkEl.attr('data-parent-ids') || '').split(',').filter(Boolean);
+
+    // Link is related if the child AND at least one parent are in related set
+    const isRelated = relatedIds.has(memberId) && parentIds.some(pId => relatedIds.has(pId));
+
+    if (!isRelated) {
+      linkEl.classed('link-unfocused', true);
+    }
+  });
+
+  // Grey out unrelated spouse links
+  g.selectAll('.spouse-link').each(function() {
+    const linkEl = d3.select(this);
+    const spouse1 = linkEl.attr('data-spouse1');
+    const spouse2 = linkEl.attr('data-spouse2');
+
+    // Spouse link is related if both spouses are in related set
+    const isRelated = relatedIds.has(spouse1) && relatedIds.has(spouse2);
+
+    if (!isRelated) {
+      linkEl.classed('link-unfocused', true);
+    }
+  });
+}, [focusedMemberId, relationshipMode, members]);
 
   const viewRootName = (() => {
     if (!viewRootId || !members) return null;

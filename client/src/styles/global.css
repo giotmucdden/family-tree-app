@@ -24,6 +24,33 @@
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
   --radius: 12px;
   --radius-sm: 8px;
+  /* Canvas specific */
+  --canvas-bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --card-border: #e0e0e0;
+  --link-color: #bdbdbd;
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+  --primary: #64b5f6;
+  --primary-dark: #42a5f5;
+  --primary-light: #1e3a5f;
+  --danger: #ef5350;
+  --danger-light: #4a1f1f;
+  --success: #66bb6a;
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --text: #e0e0e0;
+  --text-secondary: #9e9e9e;
+  --border: #333333;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  /* Canvas specific for dark mode */
+  --canvas-bg: #0a0a0a;
+  --card-bg: #1e1e1e;
+  --card-border: #333333;
+  --link-color: #555555;
 }
 
 body {
@@ -33,6 +60,362 @@ body {
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ========== DARK MODE OVERRIDES ========== */
+[data-theme="dark"] .view-toggle-bar {
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+  border-bottom: 1px solid #333;
+}
+
+[data-theme="dark"] .toggle-btn {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+[data-theme="dark"] .toggle-btn:hover {
+  background: #3d3d3d;
+}
+
+[data-theme="dark"] .toggle-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: #3d3d3d;
+  border-color: #555;
+}
+
+[data-theme="dark"] .tree-toolbar {
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
+[data-theme="dark"] .tree-toolbar h2 {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .tree-container {
+  background: var(--canvas-bg);
+}
+
+[data-theme="dark"] .tree-svg {
+  background: var(--canvas-bg);
+}
+
+/* Dark mode for member cards on canvas */
+[data-theme="dark"] .member-card-bg {
+  stroke: var(--card-border) !important;
+}
+
+[data-theme="dark"] .tree-node rect {
+  stroke: var(--card-border) !important;
+}
+
+/* Dark mode - Glass effect for gender colors */
+[data-theme="dark"] .member-card-bg[data-gender="male"],
+[data-theme="dark"] .tree-node rect[data-gender="male"] {
+  fill: rgba(33, 150, 243, 0.15) !important;
+  stroke: rgba(100, 181, 246, 0.5) !important;
+}
+
+[data-theme="dark"] .member-card-bg[data-gender="female"],
+[data-theme="dark"] .tree-node rect[data-gender="female"] {
+  fill: rgba(233, 30, 99, 0.15) !important;
+  stroke: rgba(240, 98, 146, 0.5) !important;
+}
+
+[data-theme="dark"] .member-card-bg[data-gender="other"],
+[data-theme="dark"] .tree-node rect[data-gender="other"] {
+  fill: rgba(158, 158, 158, 0.15) !important;
+  stroke: rgba(189, 189, 189, 0.4) !important;
+}
+
+/* Dark mode - Deceased members - more transparent/faded */
+[data-theme="dark"] .member-card-bg[data-deceased="true"],
+[data-theme="dark"] .tree-node rect[data-deceased="true"] {
+  fill: rgba(80, 80, 80, 0.2) !important;
+  stroke: rgba(120, 120, 120, 0.4) !important;
+  opacity: 0.7;
+}
+
+[data-theme="dark"] .tree-node text {
+  fill: var(--text) !important;
+}
+
+/* Dark mode for spouse links only (child-links keep their colors) */
+[data-theme="dark"] .spouse-link:not(.link-path-highlighted) {
+  stroke: var(--link-color) !important;
+}
+
+/* Dark mode adjustments for regular child-link colors - brighten for visibility */
+[data-theme="dark"] .child-link:not(.link-path-highlighted):not(.link-unfocused) {
+  opacity: 1;
+  filter: brightness(1.4) saturate(1.2);
+}
+
+/* Unfocused/unrelated links when a member is selected */
+.link-unfocused {
+  opacity: 0.15 !important;
+  filter: grayscale(1) !important;
+}
+
+[data-theme="dark"] .link-unfocused {
+  opacity: 0.1 !important;
+  stroke: #333 !important;
+  filter: none !important;
+}
+
+/* Unfocused/unrelated member cards when a member is selected */
+.node-unfocused {
+  opacity: 0.3 !important;
+  filter: grayscale(0.8);
+}
+
+[data-theme="dark"] .node-unfocused {
+  opacity: 0.2 !important;
+  filter: grayscale(1) brightness(0.5) !important;
+}
+
+/* Dark mode for highlighted links - Vai Vế path */
+/* Upstream links (going to ancestors) - Green color */
+[data-theme="dark"] .link-path-highlighted.link-upstream {
+  stroke: #4caf50 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 6px #4caf50);
+}
+
+/* Downstream links (going to descendants) - Orange color */
+[data-theme="dark"] .link-path-highlighted.link-downstream {
+  stroke: #ffa726 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 6px #ff9800);
+}
+
+/* Default path highlight (when direction not specified) */
+[data-theme="dark"] .link-path-highlighted {
+  stroke: #ffa726 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 6px #ff9800);
+}
+
+[data-theme="dark"] .child-link.link-path-highlighted,
+[data-theme="dark"] .spouse-link.link-path-highlighted {
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Spouse links (horizontal, marriage connection) - Pink/Magenta color */
+[data-theme="dark"] .link-path-highlighted.link-spouse {
+  stroke: #e91e63 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 6px #e91e63);
+}
+
+/* Light mode - Upstream/Downstream link colors */
+.link-path-highlighted.link-upstream {
+  stroke: #2e7d32 !important;
+  stroke-width: 3px !important;
+}
+
+.link-path-highlighted.link-downstream {
+  stroke: #e65100 !important;
+  stroke-width: 3px !important;
+}
+
+.link-path-highlighted.link-spouse {
+  stroke: #c2185b !important;
+  stroke-width: 3px !important;
+}
+
+/* Dark mode for selected/picked member cards */
+[data-theme="dark"] .tree-node rect.node-picked,
+[data-theme="dark"] .member-card-bg.node-picked {
+  stroke: #ffa726 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 8px #ff9800);
+}
+
+[data-theme="dark"] .tree-node rect.node-in-path,
+[data-theme="dark"] .member-card-bg.node-in-path {
+  stroke: #ffb74d !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 4px #ff9800);
+}
+
+/* Focused/selected member highlight on main canvas */
+.tree-node rect.node-focused,
+.member-card-bg.node-focused {
+  stroke: #1976d2 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 8px rgba(25, 118, 210, 0.6));
+}
+
+[data-theme="dark"] .tree-node rect.node-focused,
+[data-theme="dark"] .member-card-bg.node-focused {
+  stroke: #64b5f6 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 10px rgba(100, 181, 246, 0.8));
+}
+
+/* Dark mode for bottom bar */
+[data-theme="dark"] .member-bottom-bar-enhanced {
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .member-bottom-bar-enhanced .bottom-bar-close-btn {
+  color: #9e9e9e;
+}
+
+[data-theme="dark"] .member-bottom-bar-enhanced .member-fullname {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .member-bottom-bar-enhanced .family-section-title {
+  color: #9e9e9e;
+}
+
+[data-theme="dark"] .member-bottom-bar-enhanced .family-link-btn {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+[data-theme="dark"] .member-bottom-bar-enhanced .family-link-btn:hover {
+  background: #3d3d3d;
+}
+
+/* Dark mode for modals */
+[data-theme="dark"] .ReactModal__Content {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .modal-header {
+  background: #2d2d2d;
+  border-bottom: 1px solid #333;
+}
+
+[data-theme="dark"] .modal-header h2 {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #9e9e9e;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .form-group input::placeholder,
+[data-theme="dark"] .form-group textarea::placeholder {
+  color: #666;
+}
+
+[data-theme="dark"] .form-section-label {
+  color: #9e9e9e;
+  border-bottom-color: #333;
+}
+
+[data-theme="dark"] .modal-actions {
+  background: #2d2d2d;
+  border-top: 1px solid #333;
+}
+
+/* Dark mode for relationship popup */
+[data-theme="dark"] .relationship-instruction {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%);
+  border-bottom: 1px solid #2a5a8a;
+}
+
+[data-theme="dark"] .relationship-slot {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+[data-theme="dark"] .relationship-slot.filled {
+  background: #1e3a5f;
+  border-color: #2a5a8a;
+}
+
+[data-theme="dark"] .slot-name {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .slot-details {
+  color: #9e9e9e;
+}
+
+/* Dark mode for report modal */
+[data-theme="dark"] .report-modal-overlay {
+  background: rgba(0, 0, 0, 0.95);
+}
+
+[data-theme="dark"] .report-modal {
+  background: #1e1e1e;
+}
+
+[data-theme="dark"] .report-modal-header {
+  border-bottom-color: #333;
+}
+
+[data-theme="dark"] .report-modal-header h3 {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .report-modal-body {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .report-modal-footer {
+  background: #2d2d2d;
+  border-top-color: #333;
+}
+
+/* Dark mode for set root instruction */
+[data-theme="dark"] .set-root-instruction {
+  background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+  border-bottom: 1px solid #444;
+  color: #e0e0e0;
+}
+
+/* Dark mode for navbar */
+[data-theme="dark"] .navbar {
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+  border-bottom: 1px solid #333;
+}
+
+[data-theme="dark"] .navbar .logo {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .navbar .nav-links a {
+  color: #9e9e9e;
+}
+
+[data-theme="dark"] .navbar .nav-links a:hover {
+  color: #e0e0e0;
+}
+
+/* Dark mode for buttons */
+[data-theme="dark"] .btn-outline {
+  background: transparent;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+[data-theme="dark"] .btn-outline:hover {
+  background: #2d2d2d;
 }
 
 /* ========== LOADING ========== */
@@ -222,6 +605,37 @@ body {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+/* Theme toggle button in navbar */
+.btn.btn-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn.btn-icon:hover {
+  background: var(--bg);
+  transform: scale(1.05);
+}
+
+[data-theme="dark"] .btn.btn-icon.btn-theme {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+[data-theme="dark"] .btn.btn-icon.btn-theme:hover {
+  background: #3d3d3d;
 }
 
 /* ========== LOGIN PAGE ========== */
@@ -834,6 +1248,7 @@ body {
   padding: 8px 16px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
+  align-items: center;
 }
 
 .view-toggle-bar .toggle-btn {

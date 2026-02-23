@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
 function Navbar() {
   const { user, logout, isAdmin } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
+  const { isDarkMode, toggleTheme } = useTheme();
   const [pendingReports, setPendingReports] = useState(0);
 
   // Fetch pending reports count for admin
@@ -28,6 +30,13 @@ function Navbar() {
         <Link to="/">🌳 Gia Phả</Link>
       </div>
       <div className="navbar-user">
+        <button
+          className="btn btn-icon btn-theme"
+          onClick={toggleTheme}
+          title={isDarkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+        >
+          {isDarkMode ? '☀️' : '🌙'}
+        </button>
         <button
           className="btn btn-lang"
           onClick={toggleLanguage}
