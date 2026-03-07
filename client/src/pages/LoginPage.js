@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { forgotPassword, resetPassword } from '../api';
+import AnimatedTreeBackground from '../components/AnimatedTreeBackground';
 
 function LoginPage() {
   const { t, language, toggleLanguage } = useLanguage();
   const { login, register, setUser } = useAuth();
+  const { isDarkMode } = useTheme();
   const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot', 'reset'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -78,10 +81,10 @@ function LoginPage() {
       if (data.user) {
         setUser(data.user);
       } else {
-        setError(data.error || 'Đăng nhập thất bại');
+        setError(data.error || 'Login failed');
       }
     } catch (err) {
-      setError('Đăng nhập thất bại. Hãy chắc chắn rằng máy chủ đang chạy.');
+      setError('Login failed. Please make sure the server is running.');
     } finally {
       setLoading(false);
     }
@@ -96,6 +99,7 @@ function LoginPage() {
 
   return (
     <div className="login-page">
+      <AnimatedTreeBackground darkMode={isDarkMode} />
       <div className="login-card">
         <div className="login-lang-toggle">
           <button
@@ -108,11 +112,13 @@ function LoginPage() {
         </div>
 
         <div className="login-header">
-          <span className="login-icon">🌳</span>
-          <h1>Gia Phả</h1>
+          <div className="login-icon-wrapper">
+            <span className="login-icon">🌳</span>
+          </div>
+          <h1>Gia Pha</h1>
           <p>
             {language === 'vi'
-              ? 'Xây dựng và khám phá lịch sử gia đình'
+              ? 'Xay dung va kham pha lich su gia dinh'
               : 'Build and explore your family history'}
           </p>
         </div>
@@ -158,18 +164,18 @@ function LoginPage() {
                   name="firstName"
                   value={form.firstName}
                   onChange={handleChange}
-                  placeholder={language === 'vi' ? 'Tên' : 'First name'}
+                  placeholder={language === 'vi' ? 'Ten' : 'First name'}
                   required
                 />
               </div>
               <div className="form-group">
-                <label>{language === 'vi' ? 'Họ' : 'Last Name'}</label>
+                <label>{language === 'vi' ? 'Ho' : 'Last Name'}</label>
                 <input
                   type="text"
                   name="lastName"
                   value={form.lastName}
                   onChange={handleChange}
-                  placeholder={language === 'vi' ? 'Nguyễn' : 'Nguyen'}
+                  placeholder={language === 'vi' ? 'Nguyen' : 'Nguyen'}
                 />
               </div>
             </div>
@@ -198,7 +204,7 @@ function LoginPage() {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                placeholder={language === 'vi' ? 'Mật khẩu' : 'Password'}
+                placeholder={language === 'vi' ? 'Mat khau' : 'Password'}
                 required
               />
             </div>
@@ -213,7 +219,7 @@ function LoginPage() {
                   name="token"
                   value={form.token}
                   onChange={handleChange}
-                  placeholder={language === 'vi' ? 'Mã đặt lại' : 'Reset token'}
+                  placeholder={language === 'vi' ? 'Ma dat lai' : 'Reset token'}
                   required
                 />
               </div>
@@ -224,7 +230,7 @@ function LoginPage() {
                   name="newPassword"
                   value={form.newPassword}
                   onChange={handleChange}
-                  placeholder={language === 'vi' ? 'Mật khẩu mới' : 'New password'}
+                  placeholder={language === 'vi' ? 'Mat khau moi' : 'New password'}
                   required
                   minLength={6}
                 />
@@ -254,7 +260,7 @@ function LoginPage() {
 
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading
-              ? '⏳ ...'
+              ? '...'
               : mode === 'login'
               ? t('login_submit')
               : mode === 'register'
@@ -284,7 +290,7 @@ function LoginPage() {
         {(mode === 'login' || mode === 'register') && (
           <>
             <div className="login-divider">
-              <span>{language === 'vi' ? 'hoặc' : 'or'}</span>
+              <span>{language === 'vi' ? 'hoac' : 'or'}</span>
             </div>
 
             <button
@@ -293,14 +299,14 @@ function LoginPage() {
               disabled={loading}
             >
               {loading
-                ? '⏳ ...'
+                ? '...'
                 : language === 'vi'
-                ? '🌳 Xem Demo — Cây 5 Thế Hệ'
+                ? '🌳 Xem Demo — Cay 5 The He'
                 : '🌳 View Demo — 5 Generation Tree'}
             </button>
             <p className="demo-hint">
               {language === 'vi'
-                ? 'Khám phá cây gia phả mẫu với hơn 100 thành viên.'
+                ? 'Kham pha cay gia pha mau voi hon 100 thanh vien.'
                 : 'Explore a sample tree with over 100 members.'}
             </p>
           </>

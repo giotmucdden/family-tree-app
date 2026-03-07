@@ -9,6 +9,16 @@ function Navbar() {
   const { language, toggleLanguage, t } = useLanguage();
   const { isDarkMode, toggleTheme } = useTheme();
   const [pendingReports, setPendingReports] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Track scroll for navbar effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Fetch pending reports count for admin
   useEffect(() => {
@@ -25,15 +35,18 @@ function Navbar() {
   }, [isAdmin]);
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="navbar-brand">
-        <Link to="/">🌳 Gia Phả</Link>
+        <Link to="/">
+          <span className="navbar-logo-icon">🌳</span>
+          <span className="navbar-logo-text">Gia Pha</span>
+        </Link>
       </div>
       <div className="navbar-user">
         <button
           className="btn btn-icon btn-theme"
           onClick={toggleTheme}
-          title={isDarkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+          title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDarkMode ? '☀️' : '🌙'}
         </button>
@@ -60,7 +73,7 @@ function Navbar() {
           />
         )}
         <span className="navbar-name">{user?.displayName}</span>
-        <button className="btn btn-outline" onClick={logout}>
+        <button className="btn btn-outline btn-logout" onClick={logout}>
           {t('nav_logout')}
         </button>
       </div>
